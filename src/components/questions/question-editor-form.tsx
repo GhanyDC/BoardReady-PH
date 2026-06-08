@@ -11,6 +11,7 @@ import {
   bloomLevels,
   questionDifficulties,
   questionSourceTypes,
+  questionStatuses,
 } from "@/lib/questions";
 
 type SubjectOption = {
@@ -32,11 +33,13 @@ export type QuestionChoiceDefaults = {
 };
 
 export type QuestionEditorDefaults = {
+  id?: string;
   subjectId?: string;
   topicId?: string;
   difficulty?: string;
   bloomLevel?: string;
   sourceType?: string;
+  status?: string;
   questionText?: string;
   rationale?: string;
   choices?: QuestionChoiceDefaults[];
@@ -52,7 +55,7 @@ type QuestionEditorFormProps = {
   subjects: SubjectOption[];
   topics: TopicOption[];
   defaults?: QuestionEditorDefaults;
-  submitMode?: "admin-create" | "reviewer-submit";
+  submitMode?: "admin-create" | "admin-edit" | "reviewer-submit";
 };
 
 const choiceLabels = ["A", "B", "C", "D"] as const;
@@ -95,6 +98,9 @@ export function QuestionEditorForm({
 
   return (
     <form action={formAction} className="grid gap-6">
+      {defaults?.id ? (
+        <input type="hidden" name="questionId" value={defaults.id} />
+      ) : null}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="subjectId">Subject</Label>
@@ -211,6 +217,25 @@ export function QuestionEditorForm({
         </div>
       </div>
 
+      {submitMode === "admin-edit" ? (
+        <div className="grid gap-2 md:max-w-sm">
+          <Label htmlFor="status">Status</Label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={defaults?.status ?? "draft"}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            required
+          >
+            {questionStatuses.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
       <div className="grid gap-2">
         <Label htmlFor="questionText">Question text</Label>
         <textarea
@@ -306,16 +331,26 @@ export function QuestionEditorForm({
         <Button
           type="submit"
           name="intent"
-          value={submitMode === "reviewer-submit" ? "submit" : "draft"}
+          value={
+            submitMode === "reviewer-submit"
+              ? "submit"
+              : submitMode === "admin-edit"
+                ? "update"
+                : "draft"
+          }
           disabled={pending}
-          variant="outline"
+          variant={submitMode === "admin-edit" ? "default" : "outline"}
         >
           {pending ? (
             <LoaderCircle className="animate-spin" aria-hidden="true" />
           ) : (
             <Save aria-hidden="true" />
           )}
-          {submitMode === "reviewer-submit" ? "Submit for review" : "Save draft"}
+          {submitMode === "reviewer-submit"
+            ? "Submit for review"
+            : submitMode === "admin-edit"
+              ? "Save changes"
+              : "Save draft"}
         </Button>
         {submitMode === "admin-create" ? (
           <Button type="submit" name="intent" value="publish" disabled={pending}>

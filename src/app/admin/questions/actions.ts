@@ -7,6 +7,7 @@ import { requireAdminContext } from "@/lib/admin-auth";
 import {
   bloomLevels,
   questionDifficulties,
+  questionStatuses,
   questionSourceTypes,
 } from "@/lib/questions";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +16,21 @@ const choiceLabels = ["A", "B", "C", "D"] as const;
 const difficultyValues: string[] = questionDifficulties.map((item) => item.value);
 const bloomLevelValues: string[] = bloomLevels.map((item) => item.value);
 const sourceTypeValues: string[] = questionSourceTypes.map((item) => item.value);
+const statusValues: string[] = questionStatuses.map((item) => item.value);
+
+const allowedStatusTransitions: Record<string, string[]> = {
+  draft: ["draft", "pending_review", "published"],
+  pending_review: [
+    "pending_review",
+    "needs_revision",
+    "published",
+    "rejected",
+  ],
+  needs_revision: ["needs_revision", "pending_review"],
+  published: ["published", "archived"],
+  archived: ["archived", "published"],
+  rejected: ["rejected"],
+};
 
 const adminQuestionSchema = z.object({
   subjectId: z.string().uuid("Choose a subject."),
@@ -40,6 +56,14 @@ const adminQuestionSchema = z.object({
   intent: z.enum(["draft", "publish"]),
 });
 
+const adminQuestionUpdateSchema = adminQuestionSchema.extend({
+  questionId: z.string().uuid(),
+  status: z.string().refine((value) => statusValues.includes(value), {
+    message: "Choose a valid status.",
+  }),
+  intent: z.literal("update"),
+});
+
 export type QuestionFormState = {
   errors?: {
     subjectId?: string[];
@@ -51,6 +75,7 @@ export type QuestionFormState = {
     rationale?: string[];
     correctAnswer?: string[];
     choices?: string[];
+    status?: string[];
   };
   message?: string;
 };
@@ -212,6 +237,155 @@ export async function createAdminQuestionAction(
         message: publishError.message,
       };
     }
+  }
+
+  redirect("/admin/questions");
+}
+
+export async function updateAdminQuestionAction(
+  _state: QuestionFormState,
+  formData: FormData,
+): Promise<QuestionFormState> {
+  const parsed = adminQuestionUpdateSchema.safeParse({
+    questionId: formData.get("questionId"),
+    subjectId: formData.get("subjectId"),
+    topicId: formData.get("topicId"),
+    difficulty: formData.get("difficulty"),
+    bloomLevel: formData.get("bloomLevel"),
+    sourceType: formData.get("sourceType"),
+    status: formData.get("status"),
+    questionText: formData.get("questionText"),
+    rationale: formData.get("rationale")?.toString() ?? "",
+    correctAnswer: formData.get("correctAnswer"),
+    intent: formData.get("intent"),
+  });
+
+  if (!parsed.success) {
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  if (parsed.data.status === "published" && parsed.data.rationale.length < 5) {
+    return {
+      errors: {
+        rationale: ["Rationale is required before publishing."],
+      },
+    };
+  }
+
+  const choices = parseChoices(formData, parsed.data.correctAnswer);
+  const choiceError = validateChoices(choices);
+
+  if (choiceError) {
+    return {
+      errors: {
+        choices: [choiceError],
+      },
+    };
+  }
+
+  const { context, supabase, error: topicError } = await assertTopicInSubject(
+    parsed.data.subjectId,
+    parsed.data.topicId,
+  );
+
+  if (topicError) {
+    return {
+      errors: {
+        topicId: [topicError],
+      },
+    };
+  }
+
+  const { data: existingQuestion, error: loadError } = await supabase
+    .from("questions")
+    .select("id, status")
+    .eq("id", parsed.data.questionId)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id)
+    .maybeSingle();
+
+  if (loadError || !existingQuestion) {
+    return {
+      message: loadError?.message ?? "Question could not be loaded.",
+    };
+  }
+
+  const allowedTargets = allowedStatusTransitions[existingQuestion.status] ?? [];
+
+  if (!allowedTargets.includes(parsed.data.status)) {
+    return {
+      errors: {
+        status: [
+          `Cannot change status from ${existingQuestion.status} to ${parsed.data.status}.`,
+        ],
+      },
+    };
+  }
+
+  const { error: choicesError } = await supabase.from("choices").upsert(
+    choices.map((choice) => ({
+      ...choice,
+      question_id: parsed.data.questionId,
+    })),
+    {
+      onConflict: "question_id,choice_label",
+    },
+  );
+
+  if (choicesError) {
+    return {
+      message: choicesError.message,
+    };
+  }
+
+  const updatePayload: {
+    subject_id: string;
+    topic_id: string;
+    question_text: string;
+    difficulty: string;
+    bloom_level: string;
+    rationale: string | null;
+    source_type: string;
+    status: string;
+    verified_by?: string;
+    published_at?: string;
+    archived_at?: string;
+  } = {
+    subject_id: parsed.data.subjectId,
+    topic_id: parsed.data.topicId,
+    question_text: parsed.data.questionText,
+    difficulty: parsed.data.difficulty,
+    bloom_level: parsed.data.bloomLevel,
+    rationale: parsed.data.rationale || null,
+    source_type: parsed.data.sourceType,
+    status: parsed.data.status,
+  };
+
+  if (
+    parsed.data.status === "published" &&
+    existingQuestion.status !== "published"
+  ) {
+    updatePayload.verified_by = context.user.id;
+    updatePayload.published_at = new Date().toISOString();
+  }
+
+  if (parsed.data.status === "archived" && existingQuestion.status !== "archived") {
+    updatePayload.archived_at = new Date().toISOString();
+  }
+
+  const { error: updateError } = await supabase
+    .from("questions")
+    .update(updatePayload)
+    .eq("id", parsed.data.questionId)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id);
+
+  if (updateError) {
+    return {
+      message: updateError.message,
+    };
   }
 
   redirect("/admin/questions");
