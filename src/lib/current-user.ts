@@ -59,7 +59,8 @@ async function loadGroupContext(
 ): Promise<ActiveContext | null> {
   const activeMembership =
     memberships.find((membership) => membership.group_id === groupId) ?? null;
-  const canUseGroup = Boolean(activeMembership) || isGlobalSuperAdmin(memberships);
+  const globalSuperAdmin = isGlobalSuperAdmin(memberships);
+  const canUseGroup = Boolean(activeMembership) || globalSuperAdmin;
 
   if (!canUseGroup) {
     return null;
@@ -90,7 +91,7 @@ async function loadGroupContext(
     activeGroup: group,
     activeExamProgram: examProgram,
     activeMembership,
-    role: activeMembership?.role ?? "super_admin",
+    role: globalSuperAdmin ? "super_admin" : activeMembership?.role ?? "reviewer",
   };
 }
 

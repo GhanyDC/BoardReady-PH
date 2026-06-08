@@ -41,17 +41,18 @@ export default async function AdminPage() {
   const context = await requireMembership();
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH admin";
+  const { activeGroup, activeExamProgram, role } = context;
 
-  if (!canAccessAdmin(context.membership.role)) {
+  if (!activeGroup || !activeExamProgram || !role || !canAccessAdmin(role)) {
     redirect("/dashboard");
   }
 
   return (
     <AppShell
       userName={userName}
-      role={context.membership.role}
-      groupName={context.membership.group.name}
-      examProgramName={context.membership.examProgram.name}
+      role={role}
+      groupName={activeGroup.name}
+      examProgramName={activeExamProgram.name}
     >
       <div className="space-y-8">
         <section>
@@ -61,7 +62,7 @@ export default async function AdminPage() {
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
             Sprint 1 verifies role-gated access for{" "}
-            {context.membership.examProgram.name} and reserves management areas
+            {activeExamProgram.name} and reserves management areas
             for the next build phase.
           </p>
         </section>
