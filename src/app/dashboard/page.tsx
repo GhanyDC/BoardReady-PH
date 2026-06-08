@@ -5,6 +5,7 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import {
@@ -14,7 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { requireMembership } from "@/lib/current-user";
+import { Button } from "@/components/ui/button";
+import { requireCurrentUser } from "@/lib/current-user";
 import { formatRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,24 +50,50 @@ const metricCards = [
 ];
 
 export default async function DashboardPage() {
-  const context = await requireMembership();
+  const context = await requireCurrentUser();
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH reviewer";
+
+  if (!context.activeGroup || !context.activeExamProgram || !context.role) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-12">
+        <Card>
+          <CardHeader>
+            <CardTitle>Join a group to start</CardTitle>
+            <CardDescription>
+              BoardReady PH needs an active group before it can show your exam
+              track dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm leading-6 text-muted-foreground">
+              Use the access code from your admin to connect your account to a
+              group and exam track.
+            </p>
+            <Button asChild>
+              <Link href="/onboarding">Go to onboarding</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
+
   const supabase = await createClient();
   const { data: subjects } = await supabase
     .from("subjects")
     .select("id, name, board_weight")
-    .eq("group_id", context.membership.group.id)
-    .eq("exam_program_id", context.membership.examProgram.id)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id)
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
 
   return (
     <AppShell
       userName={userName}
-      role={context.membership.role}
-      groupName={context.membership.group.name}
-      examProgramName={context.membership.examProgram.name}
+      role={context.role}
+      groupName={context.activeGroup.name}
+      examProgramName={context.activeExamProgram.name}
     >
       <div className="space-y-8">
         <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -79,15 +107,15 @@ export default async function DashboardPage() {
             <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
               <p>
                 <span className="font-medium text-foreground">Exam Track:</span>{" "}
-                {context.membership.examProgram.name}
+                {context.activeExamProgram.name}
               </p>
               <p>
                 <span className="font-medium text-foreground">Group:</span>{" "}
-                {context.membership.group.name}
+                {context.activeGroup.name}
               </p>
               <p>
                 <span className="font-medium text-foreground">Role:</span>{" "}
-                {formatRole(context.membership.role)}
+                {formatRole(context.role)}
               </p>
             </div>
           </div>
