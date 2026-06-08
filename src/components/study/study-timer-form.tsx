@@ -1,7 +1,14 @@
 "use client";
 
 import { LoaderCircle, Pause, Play, RotateCcw, Save, Square } from "lucide-react";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  useActionState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import type { StudyTimerFormState } from "@/app/study-timer/actions";
 import { Button } from "@/components/ui/button";
@@ -47,15 +54,25 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function createSessionToken() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function StudyTimerForm({
   action,
   subjects,
   topics,
 }: StudyTimerFormProps) {
   const [state, formAction, pending] = useActionState(action, {});
+  const submitLockRef = useRef(false);
   const [activityType, setActivityType] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [status, setStatus] = useState<TimerStatus>("idle");
+  const [sessionToken, setSessionToken] = useState("");
   const [startedAt, setStartedAt] = useState("");
   const [endedAt, setEndedAt] = useState("");
   const [accumulatedMs, setAccumulatedMs] = useState(0);
@@ -90,6 +107,8 @@ export function StudyTimerForm({
 
   function startTimer() {
     const now = Date.now();
+    submitLockRef.current = false;
+    setSessionToken(createSessionToken());
     setStartedAt(nowIso());
     setEndedAt("");
     setAccumulatedMs(0);
@@ -121,7 +140,9 @@ export function StudyTimerForm({
   }
 
   function resetTimer() {
+    submitLockRef.current = false;
     setStatus("idle");
+    setSessionToken("");
     setStartedAt("");
     setEndedAt("");
     setAccumulatedMs(0);
@@ -134,9 +155,29 @@ export function StudyTimerForm({
   const canResume = status === "paused";
   const canEnd = status === "running" || status === "paused";
   const canSave = status === "ended" && displaySeconds > 0;
+  const savedCurrentSession = Boolean(
+    state.success && state.sessionToken === sessionToken,
+  );
+  const saveDisabled = !canSave || pending || savedCurrentSession;
+
+  useEffect(() => {
+    if (!pending && !savedCurrentSession) {
+      submitLockRef.current = false;
+    }
+  }, [pending, savedCurrentSession, state.errors, state.message]);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    if (submitLockRef.current || savedCurrentSession) {
+      event.preventDefault();
+      return;
+    }
+
+    submitLockRef.current = true;
+  }
 
   return (
-    <form action={formAction} className="grid gap-6">
+    <form action={formAction} onSubmit={handleSubmit} className="grid gap-6">
+      <input type="hidden" name="sessionToken" value={sessionToken} />
       <input type="hidden" name="startedAt" value={startedAt} />
       <input type="hidden" name="endedAt" value={endedAt} />
       <input type="hidden" name="durationSeconds" value={displaySeconds} />
@@ -305,7 +346,7 @@ export function StudyTimerForm({
         </p>
       ) : null}
 
-      {state.success ? (
+      {savedCurrentSession ? (
         <div className="flex flex-col gap-3 rounded-md border border-emerald-600/30 bg-emerald-50 px-3 py-3 text-sm text-emerald-800 sm:flex-row sm:items-center sm:justify-between">
           <span>{state.success}</span>
           <Button type="button" variant="outline" size="sm" onClick={resetTimer}>
@@ -314,13 +355,13 @@ export function StudyTimerForm({
         </div>
       ) : null}
 
-      <Button type="submit" disabled={!canSave || pending} className="w-full sm:w-fit">
+      <Button type="submit" disabled={saveDisabled} className="w-full sm:w-fit">
         {pending ? (
           <LoaderCircle className="animate-spin" aria-hidden="true" />
         ) : (
           <Save aria-hidden="true" />
         )}
-        Save session
+        {savedCurrentSession ? "Session saved" : "Save session"}
       </Button>
     </form>
   );

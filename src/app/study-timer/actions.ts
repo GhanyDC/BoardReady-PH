@@ -9,6 +9,7 @@ import { activityTypes } from "@/lib/study";
 const activityTypeValues: string[] = activityTypes.map((item) => item.value);
 
 const studySessionSchema = z.object({
+  sessionToken: z.string().trim().min(1).max(100),
   activityType: z.string().refine((value) => activityTypeValues.includes(value), {
     message: "Choose an activity type.",
   }),
@@ -35,6 +36,7 @@ const studySessionSchema = z.object({
 
 export type StudyTimerFormState = {
   errors?: {
+    sessionToken?: string[];
     activityType?: string[];
     subjectId?: string[];
     topicId?: string[];
@@ -46,6 +48,7 @@ export type StudyTimerFormState = {
   };
   message?: string;
   success?: string;
+  sessionToken?: string;
 };
 
 function nullableUuid(value: FormDataEntryValue | null) {
@@ -69,6 +72,7 @@ export async function saveStudySessionAction(
   formData: FormData,
 ): Promise<StudyTimerFormState> {
   const parsed = studySessionSchema.safeParse({
+    sessionToken: formData.get("sessionToken"),
     activityType: formData.get("activityType"),
     subjectId: nullableUuid(formData.get("subjectId")),
     topicId: nullableUuid(formData.get("topicId")),
@@ -124,5 +128,6 @@ export async function saveStudySessionAction(
 
   return {
     success: "Study session saved.",
+    sessionToken: parsed.data.sessionToken,
   };
 }
