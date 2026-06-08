@@ -47,9 +47,13 @@ where user_id = 'USER_UUID_FROM_AUTH_USERS';
 
 Use `super_admin` instead of `admin` to test global admin behavior and exam-program management policies.
 
+`BOARDREADY-PH` is the current seed invite code. `PSYPASS-FOUNDING` was an old pre-refactor seed code and should not be used.
+
 ## Exam Track Architecture
 
 `exam_programs` is the root exam-track table. Groups and subjects now reference an exam program. Topics remain connected through subjects. Future question-bank, mock-exam, and external-drill tables should include exam-program references as described in `docs/schema-notes.md`.
+
+Migration assumption: the BoardReady PH exam-program refactor assumes no non-Psychometrician groups or subjects existed before the `exam_programs` refactor. Existing groups and subjects are backfilled to Psychometrician Licensure Exam.
 
 ## Content Boundary
 

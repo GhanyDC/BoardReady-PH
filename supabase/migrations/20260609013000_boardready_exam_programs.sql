@@ -1,3 +1,7 @@
+-- This migration assumes no non-Psychometrician groups or subjects existed
+-- before the exam_programs refactor. Existing groups and subjects are
+-- backfilled to Psychometrician Licensure Exam.
+
 create table if not exists public.exam_programs (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(btrim(name)) between 2 and 160),
