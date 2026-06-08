@@ -15,6 +15,8 @@ Use this checklist after applying the Sprint 2 migration to a fresh Supabase pro
 - As an active group admin, confirm group study sessions can be read for analytics, while direct reviewer-owned progress editing is still restricted by policy.
 - As a super admin, confirm cross-group study preferences and sessions can be read according to the super admin policies.
 - Confirm `subject_id` and `topic_id` on `study_sessions` must belong to the same active group and exam track.
+- Confirm the database rejects `study_preferences.rest_days` values outside `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, `saturday`, and `sunday`.
+- Confirm valid and empty `rest_days` arrays can still be saved.
 
 ## Study Habits
 
@@ -29,6 +31,9 @@ Use this checklist after applying the Sprint 2 migration to a fresh Supabase pro
 - Visit `/study-timer` while logged out and confirm protected-route handling redirects away from the page.
 - Start, pause, resume, and end a session, then confirm paused time is excluded from saved duration.
 - Save a session with an activity type, optional subject/topic, focus rating, and notes.
+- While a session is saving, confirm the Save button shows its loading/disabled state.
+- After a successful save, confirm the same completed timer session cannot be submitted again.
+- Use Start another session and confirm a new timer session can still be saved.
 - Confirm zero-duration sessions are rejected before insert.
 - Confirm the inserted `study_sessions` row has the current user ID, active group ID, and active exam program ID.
 - Confirm a topic cannot be saved without its parent subject.
@@ -51,12 +56,15 @@ Use this checklist after applying the Sprint 2 migration to a fresh Supabase pro
 - Confirm the Study Plan card reflects target exam date, preferred study style, and preferred session length from `/study-habits`.
 - Confirm the no-preferences state links to Study Habits.
 - Confirm the no-sessions state links to Study Timer.
+- Confirm no stale Sprint 1 copy appears on the dashboard.
+- Confirm the timezone assumption for dashboard totals is documented in code or docs.
 
 ## Navigation and Roles
 
 - Confirm reviewer navigation shows Dashboard, Study Timer, Study Logs, and Study Habits.
 - Confirm reviewer navigation does not show Admin.
 - Confirm direct reviewer access to `/admin` is denied.
+- Confirm logged-out visits to `/study-habits`, `/study-timer`, and `/study-logs` redirect through middleware before rendering and preserve the `next` path.
 - Confirm admin and super admin access to `/admin` still works.
 
 ## Scope Guardrails
@@ -68,6 +76,7 @@ Use this checklist after applying the Sprint 2 migration to a fresh Supabase pro
 
 - The timer is page-based and does not persist through refresh or tab close.
 - Paused time is excluded from the duration saved by the timer.
-- Dashboard day and week calculations use the application server's local timezone.
+- Dashboard day and week calculations use app/server local date boundaries.
+- Study log date filters use app/server local date boundaries.
 - Weekly dashboard progress uses a Monday-start calendar week.
 - Dedicated timezone preferences are not implemented in Sprint 2.
