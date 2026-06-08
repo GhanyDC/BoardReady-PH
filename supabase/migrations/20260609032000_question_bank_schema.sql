@@ -305,7 +305,12 @@ security definer
 set search_path = public
 as $$
 begin
-  perform public.assert_question_publishable(coalesce(new.question_id, old.question_id));
+  if tg_op = 'DELETE' then
+    perform public.assert_question_publishable(old.question_id);
+  else
+    perform public.assert_question_publishable(new.question_id);
+  end if;
+
   return null;
 end;
 $$;
