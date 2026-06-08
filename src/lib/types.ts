@@ -176,6 +176,108 @@ export type Database = {
         };
         Relationships: [];
       };
+      study_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          daily_goal_minutes: number;
+          weekly_goal_minutes: number;
+          preferred_session_length_minutes: number;
+          preferred_study_time: string;
+          preferred_study_style: string;
+          weakness_strategy: string;
+          rest_days: string[];
+          target_exam_date: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          daily_goal_minutes?: number;
+          weekly_goal_minutes?: number;
+          preferred_session_length_minutes?: number;
+          preferred_study_time?: string;
+          preferred_study_style?: string;
+          weakness_strategy?: string;
+          rest_days?: string[];
+          target_exam_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          daily_goal_minutes?: number;
+          weekly_goal_minutes?: number;
+          preferred_session_length_minutes?: number;
+          preferred_study_time?: string;
+          preferred_study_style?: string;
+          weakness_strategy?: string;
+          rest_days?: string[];
+          target_exam_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      study_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string | null;
+          topic_id: string | null;
+          activity_type: string;
+          started_at: string;
+          ended_at: string | null;
+          duration_seconds: number;
+          focus_rating: number | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id?: string | null;
+          topic_id?: string | null;
+          activity_type: string;
+          started_at: string;
+          ended_at?: string | null;
+          duration_seconds: number;
+          focus_rating?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          subject_id?: string | null;
+          topic_id?: string | null;
+          activity_type?: string;
+          started_at?: string;
+          ended_at?: string | null;
+          duration_seconds?: number;
+          focus_rating?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       topics: {
         Row: {
           id: string;
@@ -259,6 +361,40 @@ export type Database = {
         Args: {
           target_subject_id: string;
           target_group_id: string;
+        };
+        Returns: boolean;
+      };
+      is_active_study_context: {
+        Args: {
+          target_user_id: string;
+          target_group_id: string;
+          target_exam_program_id: string;
+        };
+        Returns: boolean;
+      };
+      is_valid_study_subject: {
+        Args: {
+          target_subject_id: string | null;
+          target_group_id: string;
+          target_exam_program_id: string;
+        };
+        Returns: boolean;
+      };
+      is_valid_study_topic: {
+        Args: {
+          target_topic_id: string | null;
+          target_subject_id: string | null;
+          target_group_id: string;
+        };
+        Returns: boolean;
+      };
+      can_manage_own_study_session: {
+        Args: {
+          target_user_id: string;
+          target_group_id: string;
+          target_exam_program_id: string;
+          target_subject_id: string | null;
+          target_topic_id: string | null;
         };
         Returns: boolean;
       };
