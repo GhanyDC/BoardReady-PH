@@ -137,6 +137,138 @@ export type Database = {
         };
         Relationships: [];
       };
+      questions: {
+        Row: {
+          id: string;
+          exam_program_id: string;
+          group_id: string;
+          subject_id: string;
+          topic_id: string;
+          question_text: string;
+          difficulty: string;
+          bloom_level: string;
+          rationale: string | null;
+          source_type: string;
+          status: string;
+          created_by: string;
+          verified_by: string | null;
+          published_at: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          exam_program_id: string;
+          group_id: string;
+          subject_id: string;
+          topic_id: string;
+          question_text: string;
+          difficulty: string;
+          bloom_level?: string;
+          rationale?: string | null;
+          source_type?: string;
+          status?: string;
+          created_by: string;
+          verified_by?: string | null;
+          published_at?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          exam_program_id?: string;
+          group_id?: string;
+          subject_id?: string;
+          topic_id?: string;
+          question_text?: string;
+          difficulty?: string;
+          bloom_level?: string;
+          rationale?: string | null;
+          source_type?: string;
+          status?: string;
+          created_by?: string;
+          verified_by?: string | null;
+          published_at?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      choices: {
+        Row: {
+          id: string;
+          question_id: string;
+          choice_label: string;
+          choice_text: string;
+          is_correct: boolean;
+          explanation: string | null;
+          order_index: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          choice_label: string;
+          choice_text: string;
+          is_correct?: boolean;
+          explanation?: string | null;
+          order_index: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          question_id?: string;
+          choice_label?: string;
+          choice_text?: string;
+          is_correct?: boolean;
+          explanation?: string | null;
+          order_index?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      question_reports: {
+        Row: {
+          id: string;
+          question_id: string;
+          reported_by: string;
+          report_type: string;
+          message: string;
+          status: string;
+          resolved_by: string | null;
+          resolved_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          reported_by: string;
+          report_type: string;
+          message: string;
+          status?: string;
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          question_id?: string;
+          reported_by?: string;
+          report_type?: string;
+          message?: string;
+          status?: string;
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       subjects: {
         Row: {
           id: string;
@@ -397,6 +529,39 @@ export type Database = {
           target_topic_id: string | null;
         };
         Returns: boolean;
+      };
+      is_valid_question_context: {
+        Args: {
+          target_group_id: string;
+          target_exam_program_id: string;
+          target_subject_id: string;
+          target_topic_id: string;
+        };
+        Returns: boolean;
+      };
+      can_read_question: {
+        Args: {
+          target_question_id: string;
+        };
+        Returns: boolean;
+      };
+      can_insert_question_choice: {
+        Args: {
+          target_question_id: string;
+        };
+        Returns: boolean;
+      };
+      can_manage_question_report: {
+        Args: {
+          target_question_id: string;
+        };
+        Returns: boolean;
+      };
+      assert_question_publishable: {
+        Args: {
+          target_question_id: string;
+        };
+        Returns: undefined;
       };
       is_group_admin: {
         Args: {
