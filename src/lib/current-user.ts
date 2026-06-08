@@ -18,9 +18,21 @@ type Membership = Pick<
   "group_id" | "role" | "joined_at"
 >;
 
+type ActiveContext = {
+  activeGroup: Group;
+  activeExamProgram: ExamProgram;
+  activeMembership: Membership | null;
+  role: AppRole;
+};
+
 export type CurrentUserContext = {
   user: User;
   profile: Profile | null;
+  activeGroup: Group | null;
+  activeExamProgram: ExamProgram | null;
+  activeMembership: Membership | null;
+  allMemberships: Membership[];
+  role: AppRole | null;
   membership: {
     group: Group;
     examProgram: ExamProgram;
@@ -35,6 +47,60 @@ function choosePrimaryMembership(memberships: Membership[]) {
     memberships[0] ??
     null
   );
+}
+
+function isGlobalSuperAdmin(memberships: Membership[]) {
+  return memberships.some((membership) => membership.role === "super_admin");
+}
+
+async function loadGroupContext(
+  groupId: string,
+  memberships: Membership[],
+): Promise<ActiveContext | null> {
+  const activeMembership =
+    memberships.find((membership) => membership.group_id === groupId) ?? null;
+  const canUseGroup = Boolean(activeMembership) || isGlobalSuperAdmin(memberships);
+
+  if (!canUseGroup) {
+    return null;
+  }
+
+  const supabase = await createClient();
+  const { data: group } = await supabase
+    .from("groups")
+    .select("id, name, exam_program_id")
+    .eq("id", groupId)
+    .maybeSingle();
+
+  if (!group) {
+    return null;
+  }
+
+  const { data: examProgram } = await supabase
+    .from("exam_programs")
+    .select("id, name, slug, exam_type, country")
+    .eq("id", group.exam_program_id)
+    .maybeSingle();
+
+  if (!examProgram) {
+    return null;
+  }
+
+  return {
+    activeGroup: group,
+    activeExamProgram: examProgram,
+    activeMembership,
+    role: activeMembership?.role ?? "super_admin",
+  };
+}
+
+async function setCurrentGroup(userId: string, groupId: string) {
+  const supabase = await createClient();
+
+  await supabase
+    .from("profiles")
+    .update({ current_group_id: groupId })
+    .eq("id", userId);
 }
 
 export async function getCurrentUserContext(): Promise<CurrentUserContext | null> {
@@ -58,40 +124,50 @@ export async function getCurrentUserContext(): Promise<CurrentUserContext | null
       .order("joined_at", { ascending: true }),
   ]);
 
-  const primaryMembership = choosePrimaryMembership(memberships ?? []);
+  const allMemberships = memberships ?? [];
+  const preferredContext = profile?.current_group_id
+    ? await loadGroupContext(profile.current_group_id, allMemberships)
+    : null;
 
-  if (!primaryMembership) {
+  const fallbackMembership = preferredContext
+    ? null
+    : choosePrimaryMembership(allMemberships);
+  const fallbackContext = fallbackMembership
+    ? await loadGroupContext(fallbackMembership.group_id, allMemberships)
+    : null;
+
+  const activeContext = preferredContext ?? fallbackContext;
+
+  if (!activeContext) {
     return {
       user,
       profile,
+      activeGroup: null,
+      activeExamProgram: null,
+      activeMembership: null,
+      allMemberships,
+      role: null,
       membership: null,
     };
   }
 
-  const { data: group } = await supabase
-    .from("groups")
-    .select("id, name, exam_program_id")
-    .eq("id", primaryMembership.group_id)
-    .maybeSingle();
-
-  const { data: examProgram } = group
-    ? await supabase
-        .from("exam_programs")
-        .select("id, name, slug, exam_type, country")
-        .eq("id", group.exam_program_id)
-        .maybeSingle()
-    : { data: null };
+  if (!preferredContext && fallbackContext) {
+    await setCurrentGroup(user.id, fallbackContext.activeGroup.id);
+  }
 
   return {
     user,
     profile,
-    membership: group && examProgram
-      ? {
-          group,
-          examProgram,
-          role: primaryMembership.role,
-        }
-      : null,
+    activeGroup: activeContext.activeGroup,
+    activeExamProgram: activeContext.activeExamProgram,
+    activeMembership: activeContext.activeMembership,
+    allMemberships,
+    role: activeContext.role,
+    membership: {
+      group: activeContext.activeGroup,
+      examProgram: activeContext.activeExamProgram,
+      role: activeContext.role,
+    },
   };
 }
 
