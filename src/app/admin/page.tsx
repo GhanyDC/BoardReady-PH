@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Megaphone, NotebookTabs, ShieldCheck, SquarePen } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,21 +21,25 @@ const adminAreas = [
     title: "Question bank",
     description: "Admin-authored and reviewer-submitted questions.",
     icon: SquarePen,
+    href: "/admin/questions",
   },
   {
     title: "Subjects and topics",
     description: "Group-scoped board outline management.",
     icon: NotebookTabs,
+    href: "/admin/subjects",
   },
   {
     title: "Mock exams",
     description: "Published-question exam sets for readiness checks.",
     icon: ShieldCheck,
+    href: null,
   },
   {
     title: "Announcements",
     description: "Private updates for the group.",
     icon: Megaphone,
+    href: null,
   },
 ];
 
@@ -83,7 +89,13 @@ export default async function AdminPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  Foundation ready
+                  {area.href ? (
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={area.href}>Open</Link>
+                    </Button>
+                  ) : (
+                    "Reserved for a later sprint"
+                  )}
                 </CardContent>
               </Card>
             );

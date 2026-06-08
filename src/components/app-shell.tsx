@@ -3,8 +3,11 @@ import {
   BookOpenCheck,
   BookOpenText,
   ClipboardList,
+  Layers3,
   LayoutDashboard,
   LogOut,
+  MessageSquarePlus,
+  NotebookTabs,
   ShieldCheck,
   SlidersHorizontal,
   Timer,
@@ -57,6 +60,24 @@ export function AppShell({
       show: true,
     },
     {
+      href: "/submit-question",
+      label: "Submit Question",
+      icon: MessageSquarePlus,
+      show: !canAccessAdmin(role),
+    },
+    {
+      href: "/admin/questions",
+      label: "Question Bank",
+      icon: NotebookTabs,
+      show: canAccessAdmin(role),
+    },
+    {
+      href: "/admin/subjects",
+      label: "Subjects/Topics",
+      icon: Layers3,
+      show: canAccessAdmin(role),
+    },
+    {
       href: "/admin",
       label: "Admin",
       icon: ShieldCheck,
@@ -85,7 +106,7 @@ export function AppShell({
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <nav className="flex items-center gap-1" aria-label="Primary">
+            <nav className="flex flex-wrap items-center gap-1" aria-label="Primary">
               {navItems
                 .filter((item) => item.show)
                 .map((item) => {
