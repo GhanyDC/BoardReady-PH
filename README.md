@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BoardReady PH
 
-## Getting Started
+Modular exam-prep and board-readiness platform for Philippine board, licensure, and major exam takers. The first supported exam track is the Psychometrician Licensure Exam.
 
-First, run the development server:
+## Sprint 1 Foundation
+
+- Email/password signup and login through Supabase Auth
+- Supabase SSR clients using `@supabase/ssr`
+- Next.js `proxy.ts` session refresh and protected route redirects
+- Invite-only onboarding with full name and group access code
+- Role-aware dashboard/admin navigation
+- Initial RLS-protected tables: `profiles`, `exam_programs`, `groups`, `group_members`, `subjects`, `topics`
+- Seeded first exam program and four Psychometrician Licensure Exam subjects
+
+## Environment
+
+Create `.env.local`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open `http://localhost:3000`.
 
-## Learn More
+## Supabase Setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Create a Supabase project.
+2. Copy `.env.example` to `.env.local` and fill in the project URL and anon key.
+3. Apply all SQL migrations in order from `supabase/migrations`.
+4. For fast local testing, disable email confirmation in Supabase Auth settings. If email confirmation stays enabled, set the site URL to your app URL and add `/auth/callback` as an allowed redirect path.
+5. Use the seeded invite code `BOARDREADY-PH` during onboarding.
+6. To test `/admin`, promote a joined user after onboarding:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```sql
+update public.group_members
+set role = 'admin'
+where user_id = 'USER_UUID_FROM_AUTH_USERS';
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Use `super_admin` instead of `admin` to test global admin behavior and exam-program management policies.
 
-## Deploy on Vercel
+## Exam Track Architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`exam_programs` is the root exam-track table. Groups and subjects now reference an exam program. Topics remain connected through subjects. Future question-bank, mock-exam, and external-drill tables should include exam-program references as described in `docs/schema-notes.md`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Content Boundary
+
+BoardReady PH must not upload, store, scan, OCR, or host review center hardcopy drills. Future external drill logging should store only score, subject, topic, total items, mistakes, and notes.
