@@ -8,6 +8,7 @@ const protectedPrefixes = [
   "/dashboard",
   "/admin",
   "/onboarding",
+  "/submit-question",
   "/study-habits",
   "/study-logs",
   "/study-timer",
