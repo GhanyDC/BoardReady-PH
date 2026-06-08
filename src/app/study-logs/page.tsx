@@ -26,6 +26,8 @@ type StudyLogsPageProps = {
   }>;
 };
 
+// Date filters currently use app/server local date boundaries.
+// User-specific timezone support can be added later.
 function endOfDayIso(date: string) {
   const parsed = new Date(`${date}T23:59:59.999`);
   return parsed.toISOString();

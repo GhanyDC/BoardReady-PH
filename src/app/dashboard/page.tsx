@@ -27,6 +27,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
+// Today and weekly totals currently use app/server local date boundaries.
+// User-specific timezone support can be added later.
 function startOfLocalDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -322,9 +324,9 @@ export default async function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm leading-6 text-muted-foreground">
-              External hardcopy drills stay outside BoardReady PH. Sprint 1
-              only prepares secure account, role, group, exam track, subject,
-              and topic foundations.
+              Study progress is scoped to your account and active group.
+              External hardcopy drills stay outside BoardReady PH and are never
+              uploaded here.
             </CardContent>
           </Card>
         </section>
