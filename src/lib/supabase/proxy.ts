@@ -4,7 +4,14 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getSupabaseConfig } from "@/lib/env";
 import type { Database } from "@/lib/types";
 
-const protectedPrefixes = ["/dashboard", "/admin", "/onboarding"];
+const protectedPrefixes = [
+  "/dashboard",
+  "/admin",
+  "/onboarding",
+  "/study-habits",
+  "/study-logs",
+  "/study-timer",
+];
 const authPrefixes = ["/login", "/signup"];
 
 function isPathMatch(pathname: string, prefixes: string[]) {
