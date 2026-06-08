@@ -1,10 +1,13 @@
 import Link from "next/link";
 import {
   BookOpenCheck,
+  BookOpenText,
   ClipboardList,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  SlidersHorizontal,
+  Timer,
 } from "lucide-react";
 
 import { signOutAction } from "@/app/auth/actions";
@@ -33,6 +36,24 @@ export function AppShell({
       href: "/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
+      show: true,
+    },
+    {
+      href: "/study-timer",
+      label: "Study Timer",
+      icon: Timer,
+      show: true,
+    },
+    {
+      href: "/study-logs",
+      label: "Study Logs",
+      icon: BookOpenText,
+      show: true,
+    },
+    {
+      href: "/study-habits",
+      label: "Study Habits",
+      icon: SlidersHorizontal,
       show: true,
     },
     {

@@ -1,8 +1,8 @@
 import {
   BarChart3,
+  CalendarDays,
   Clock3,
   ListChecks,
-  Target,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
@@ -19,35 +19,51 @@ import { Button } from "@/components/ui/button";
 import { requireCurrentUser } from "@/lib/current-user";
 import { formatRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
+import {
+  activityLabel,
+  formatDuration,
+  studyStyleLabel,
+} from "@/lib/study";
 
 export const dynamic = "force-dynamic";
 
-const metricCards = [
-  {
-    title: "Readiness",
-    value: "0%",
-    helper: "Baseline starts after the first mock exam.",
-    icon: TrendingUp,
-  },
-  {
-    title: "Study time",
-    value: "0h",
-    helper: "Timer and logs arrive in Sprint 2.",
-    icon: Clock3,
-  },
-  {
-    title: "Weak areas",
-    value: "Pending",
-    helper: "Missed-question patterns will appear here.",
-    icon: Target,
-  },
-  {
-    title: "Next task",
-    value: "Onboarded",
-    helper: "Question drills unlock after the bank is published.",
-    icon: ListChecks,
-  },
-];
+function startOfLocalDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfLocalWeek(date: Date) {
+  const weekStart = startOfLocalDay(date);
+  const day = weekStart.getDay();
+  const daysSinceMonday = (day + 6) % 7;
+  weekStart.setDate(weekStart.getDate() - daysSinceMonday);
+  return weekStart;
+}
+
+function progressPercent(totalSeconds: number, goalMinutes?: number) {
+  if (!goalMinutes) {
+    return 0;
+  }
+
+  return Math.min(100, Math.round((totalSeconds / (goalMinutes * 60)) * 100));
+}
+
+function formatGoalProgress(totalSeconds: number, goalMinutes?: number) {
+  if (!goalMinutes) {
+    return "Set a goal in Study Habits.";
+  }
+
+  return `${progressPercent(totalSeconds, goalMinutes)}% of ${goalMinutes}m goal`;
+}
+
+function formatTargetDate(value?: string | null) {
+  if (!value) {
+    return "No exam date";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+  }).format(new Date(`${value}T00:00:00`));
+}
 
 export default async function DashboardPage() {
   const context = await requireCurrentUser();
@@ -80,13 +96,122 @@ export default async function DashboardPage() {
   }
 
   const supabase = await createClient();
-  const { data: subjects } = await supabase
-    .from("subjects")
-    .select("id, name, board_weight")
-    .eq("group_id", context.activeGroup.id)
-    .eq("exam_program_id", context.activeExamProgram.id)
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+  const todayStart = startOfLocalDay(new Date());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+  const weekStart = startOfLocalWeek(new Date());
+  const nextWeekStart = new Date(weekStart);
+  nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+  const [
+    { data: subjects },
+    { data: preferences },
+    { data: weekSessions },
+    { data: latestSession },
+  ] = await Promise.all([
+    supabase
+      .from("subjects")
+      .select("id, name, board_weight")
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("study_preferences")
+      .select(
+        "daily_goal_minutes, weekly_goal_minutes, preferred_session_length_minutes, preferred_study_style, target_exam_date",
+      )
+      .eq("user_id", context.user.id)
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .maybeSingle(),
+    supabase
+      .from("study_sessions")
+      .select("id, subject_id, activity_type, started_at, duration_seconds")
+      .eq("user_id", context.user.id)
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .gte("started_at", weekStart.toISOString())
+      .lt("started_at", nextWeekStart.toISOString()),
+    supabase
+      .from("study_sessions")
+      .select("id, subject_id, activity_type, started_at, duration_seconds")
+      .eq("user_id", context.user.id)
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const subjectNameById = new Map(
+    (subjects ?? []).map((subject) => [subject.id, subject.name]),
+  );
+  const todaySeconds = (weekSessions ?? [])
+    .filter((session) => {
+      const startedAt = new Date(session.started_at);
+      return startedAt >= todayStart && startedAt < tomorrowStart;
+    })
+    .reduce((total, session) => total + session.duration_seconds, 0);
+  const weekSeconds = (weekSessions ?? []).reduce(
+    (total, session) => total + session.duration_seconds,
+    0,
+  );
+  const latestSubjectName = latestSession?.subject_id
+    ? subjectNameById.get(latestSession.subject_id)
+    : null;
+  const latestSessionHelper = latestSession
+    ? `${activityLabel(latestSession.activity_type)} / ${
+        latestSubjectName ?? "General session"
+      }`
+    : "Start the timer to begin tracking.";
+  const studyPlanHelper = preferences
+    ? `${studyStyleLabel(preferences.preferred_study_style)} / ${
+        preferences.preferred_session_length_minutes
+      }m sessions`
+    : "Set goals and preferences in Study Habits.";
+
+  const metricCards = [
+    {
+      title: "Today's Study Time",
+      value: formatDuration(todaySeconds),
+      helper: formatGoalProgress(todaySeconds, preferences?.daily_goal_minutes),
+      icon: Clock3,
+      href: "/study-timer",
+      action: "Log time",
+      progress: progressPercent(todaySeconds, preferences?.daily_goal_minutes),
+    },
+    {
+      title: "Weekly Study Time",
+      value: formatDuration(weekSeconds),
+      helper: formatGoalProgress(weekSeconds, preferences?.weekly_goal_minutes),
+      icon: TrendingUp,
+      href: "/study-logs",
+      action: "View logs",
+      progress: progressPercent(weekSeconds, preferences?.weekly_goal_minutes),
+    },
+    {
+      title: "Latest Session",
+      value: latestSession
+        ? formatDuration(latestSession.duration_seconds)
+        : "No sessions yet",
+      helper: latestSessionHelper,
+      icon: CalendarDays,
+      href: "/study-timer",
+      action: "Open timer",
+      progress: latestSession ? 100 : 0,
+    },
+    {
+      title: "Study Plan",
+      value: formatTargetDate(preferences?.target_exam_date),
+      helper: studyPlanHelper,
+      icon: ListChecks,
+      href: "/study-habits",
+      action: "Edit habits",
+      progress: preferences ? 100 : 0,
+    },
+  ];
 
   return (
     <AppShell
@@ -121,7 +246,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground">
             <BarChart3 className="size-4 text-primary" aria-hidden="true" />
-            Sprint 1 foundation
+            Server-local day and calendar week
           </div>
         </section>
 
@@ -142,6 +267,18 @@ export default async function DashboardPage() {
                   <p className="mt-2 text-sm text-muted-foreground">
                     {card.helper}
                   </p>
+                  <div
+                    className="mt-4 h-2 rounded-full bg-muted"
+                    aria-hidden="true"
+                  >
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${card.progress}%` }}
+                    />
+                  </div>
+                  <Button asChild variant="link" className="mt-3 h-auto p-0">
+                    <Link href={card.href}>{card.action}</Link>
+                  </Button>
                 </CardContent>
               </Card>
             );
