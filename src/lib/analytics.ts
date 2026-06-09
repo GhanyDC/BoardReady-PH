@@ -327,6 +327,6 @@ export function summarizePerformance(
     watchlistTopics,
     stableTopics,
     insufficientTopics,
-    topImprovingTopics: stableTopics.slice(0, 3),
+    topHighPerformingTopics: stableTopics.slice(0, 3),
   };
 }
