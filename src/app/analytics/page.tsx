@@ -4,6 +4,7 @@ import {
   BarChart3,
   CheckCircle2,
   CircleHelp,
+  ClipboardList,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -30,6 +31,10 @@ import {
   type TopicPerformance,
 } from "@/lib/analytics";
 import { requireMembership } from "@/lib/current-user";
+import {
+  formatExternalDrillPercentage,
+  getExternalDrillSummary,
+} from "@/lib/external-drills";
 import { formatDateTime } from "@/lib/questions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -166,6 +171,7 @@ export default async function AnalyticsPage() {
     { data: subjects },
     { data: topics },
     performanceResult,
+    externalDrillSummary,
   ] = await Promise.all([
     supabase
       .from("subjects")
@@ -181,6 +187,7 @@ export default async function AnalyticsPage() {
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     getPerformanceAnalytics(supabase, analyticsContext),
+    getExternalDrillSummary(supabase, analyticsContext),
   ]);
   const activeSubjects = subjects ?? [];
   const activeTopics = topics ?? [];
@@ -287,6 +294,156 @@ export default async function AnalyticsPage() {
             </CardContent>
           </Card>
         </section>
+
+        <section className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <CardTitle>External drills</CardTitle>
+                <CardDescription>Logged offline scores</CardDescription>
+              </div>
+              <ClipboardList className="size-5 text-primary" aria-hidden="true" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">
+                {externalDrillSummary.totalDrills}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>External average</CardTitle>
+              <CardDescription>External drill signal only</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">
+                {formatExternalDrillPercentage(
+                  externalDrillSummary.averagePercentage,
+                )}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>External items</CardTitle>
+              <CardDescription>Hardcopy/offline total</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">
+                {externalDrillSummary.totalItems}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Weakest external subject</CardTitle>
+              <CardDescription>Not practice accuracy</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-semibold leading-6">
+                {externalDrillSummary.weakestSubject
+                  ? externalDrillSummary.weakestSubject.subjectName
+                  : "No logs yet"}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {externalDrillSummary.weakestSubject
+                  ? formatExternalDrillPercentage(
+                      externalDrillSummary.weakestSubject.averagePercentage,
+                    )
+                  : "Log an external drill to see signals."}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>External drill signals</CardTitle>
+            <CardDescription>
+              Kept separate from published-question practice accuracy and weak
+              area refresh.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {externalDrillSummary.totalDrills === 0 ? (
+              <div className="rounded-md border px-3 py-3 text-sm text-muted-foreground">
+                No external drill logs yet.
+                <Button asChild variant="link" className="ml-1 h-auto p-0">
+                  <Link href="/external-drills/new">Log external drill</Link>
+                </Button>
+              </div>
+            ) : null}
+
+            {externalDrillSummary.latestDrill ? (
+              <div className="rounded-md border px-3 py-3 text-sm">
+                <p className="font-medium">Latest external drill</p>
+                <p className="mt-1 text-muted-foreground">
+                  {externalDrillSummary.latestDrill.drill_title} /{" "}
+                  {externalDrillSummary.latestDrill.subjectName} /{" "}
+                  {formatExternalDrillPercentage(
+                    Number(externalDrillSummary.latestDrill.percentage),
+                  )}
+                </p>
+              </div>
+            ) : null}
+
+            {externalDrillSummary.weakestTopic ? (
+              <div className="rounded-md border px-3 py-3 text-sm">
+                <p className="font-medium">Weakest external topic</p>
+                <p className="mt-1 text-muted-foreground">
+                  {externalDrillSummary.weakestTopic.topicName} /{" "}
+                  {externalDrillSummary.weakestTopic.subjectName} /{" "}
+                  {formatExternalDrillPercentage(
+                    externalDrillSummary.weakestTopic.averagePercentage,
+                  )}
+                </p>
+              </div>
+            ) : null}
+
+            {externalDrillSummary.averagePercentageBySubject.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="py-3 pr-4 font-medium">Subject</th>
+                      <th className="py-3 pr-4 font-medium">Average</th>
+                      <th className="py-3 pr-4 font-medium">Drills</th>
+                      <th className="py-3 pr-4 font-medium">Items</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {externalDrillSummary.averagePercentageBySubject.map(
+                      (subjectSummary) => (
+                        <tr
+                          key={subjectSummary.subjectId}
+                          className="border-b last:border-b-0"
+                        >
+                          <td className="py-3 pr-4 font-medium">
+                            {subjectSummary.subjectName}
+                          </td>
+                          <td className="py-3 pr-4">
+                            {formatExternalDrillPercentage(
+                              subjectSummary.averagePercentage,
+                            )}
+                          </td>
+                          <td className="py-3 pr-4">
+                            {subjectSummary.totalDrills}
+                          </td>
+                          <td className="py-3 pr-4">
+                            {subjectSummary.totalItems}
+                          </td>
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
 
         {performanceResult.errors.length > 0 ? (
           <Card>
