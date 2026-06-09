@@ -13,6 +13,7 @@ import {
   RotateCcw,
   ShieldCheck,
   SlidersHorizontal,
+  SquarePen,
   Target,
   Timer,
 } from "lucide-react";
@@ -67,6 +68,18 @@ export function AppShell({
       href: "/analytics",
       label: "Analytics",
       icon: BarChart3,
+      show: true,
+    },
+    {
+      href: "/external-drills",
+      label: "External Drills",
+      icon: ClipboardList,
+      show: true,
+    },
+    {
+      href: "/external-drills/new",
+      label: "Log External Drill",
+      icon: SquarePen,
       show: true,
     },
     {

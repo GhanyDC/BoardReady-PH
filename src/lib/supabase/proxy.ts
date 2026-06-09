@@ -8,6 +8,7 @@ const protectedPrefixes = [
   "/analytics",
   "/dashboard",
   "/admin",
+  "/external-drills",
   "/missed-questions",
   "/onboarding",
   "/practice",
