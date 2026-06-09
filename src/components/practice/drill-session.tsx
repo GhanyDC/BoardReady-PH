@@ -13,12 +13,15 @@ type DrillChoice = {
   id: string;
   choice_label: string;
   choice_text: string;
+  explanation: string | null;
+  is_correct: boolean;
 };
 
 type DrillQuestion = {
   id: string;
   question_text: string;
   difficulty: string;
+  rationale: string;
   subjectName: string;
   topicName: string;
   choices: DrillChoice[];
@@ -42,6 +45,7 @@ export function DrillSession({
 }: DrillSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedChoiceId, setSelectedChoiceId] = useState("");
+  const [confidenceRating, setConfidenceRating] = useState("3");
   const [results, setResults] = useState<AttemptResult[]>([]);
   const [feedback, setFeedback] = useState<AttemptResult | null>(null);
   const [error, setError] = useState("");
@@ -50,6 +54,12 @@ export function DrillSession({
   const currentQuestion = questions[currentIndex];
   const complete = currentIndex >= questions.length;
   const correctCount = results.filter((result) => result.isCorrect).length;
+  const selectedChoice = currentQuestion?.choices.find(
+    (choice) => choice.id === selectedChoiceId,
+  );
+  const correctChoice = currentQuestion?.choices.find(
+    (choice) => choice.is_correct,
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,6 +80,7 @@ export function DrillSession({
     formData.set("questionId", currentQuestion.id);
     formData.set("selectedChoiceId", selectedChoiceId);
     formData.set("attemptType", attemptType);
+    formData.set("confidenceRating", confidenceRating);
     formData.set(
       "timeSpentSeconds",
       (
@@ -99,6 +110,7 @@ export function DrillSession({
   function moveNext() {
     setFeedback(null);
     setSelectedChoiceId("");
+    setConfidenceRating("3");
     setError("");
     setCurrentIndex((index) => index + 1);
     setQuestionStartedAt(Date.now());
@@ -182,6 +194,29 @@ export function DrillSession({
             ))}
           </div>
 
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Confidence</p>
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <label
+                  key={rating}
+                  className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                >
+                  <input
+                    type="radio"
+                    name="confidenceRating"
+                    value={rating}
+                    checked={confidenceRating === rating.toString()}
+                    onChange={(event) => setConfidenceRating(event.target.value)}
+                    disabled={Boolean(feedback) || saving}
+                    className="size-4 accent-primary"
+                  />
+                  {rating}
+                </label>
+              ))}
+            </div>
+          </div>
+
           {error ? (
             <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -189,13 +224,58 @@ export function DrillSession({
           ) : null}
 
           {feedback ? (
-            <div className="flex items-center gap-2 rounded-md border px-3 py-3 text-sm">
-              {feedback.isCorrect ? (
-                <CheckCircle2 className="size-5 text-emerald-600" />
-              ) : (
-                <XCircle className="size-5 text-destructive" />
-              )}
-              <span>{feedback.isCorrect ? "Correct" : "Incorrect"}</span>
+            <div className="grid gap-4 rounded-md border px-3 py-3 text-sm">
+              <div className="flex items-center gap-2">
+                {feedback.isCorrect ? (
+                  <CheckCircle2 className="size-5 text-emerald-600" />
+                ) : (
+                  <XCircle className="size-5 text-destructive" />
+                )}
+                <span>{feedback.isCorrect ? "Correct" : "Incorrect"}</span>
+              </div>
+
+              <div className="grid gap-2 text-muted-foreground">
+                <p>
+                  Correct answer:{" "}
+                  <span className="font-medium text-foreground">
+                    {correctChoice
+                      ? `${correctChoice.choice_label}. ${correctChoice.choice_text}`
+                      : "Unavailable"}
+                  </span>
+                </p>
+                <p>
+                  Your answer:{" "}
+                  <span className="font-medium text-foreground">
+                    {selectedChoice
+                      ? `${selectedChoice.choice_label}. ${selectedChoice.choice_text}`
+                      : "Unavailable"}
+                  </span>
+                </p>
+                <p>Confidence: {confidenceRating}/5</p>
+              </div>
+
+              {currentQuestion.rationale ? (
+                <div className="rounded-md bg-muted px-3 py-2">
+                  <p className="font-medium text-foreground">Rationale</p>
+                  <p className="mt-1 leading-6 text-muted-foreground">
+                    {currentQuestion.rationale}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="grid gap-2">
+                <p className="font-medium">Choice explanations</p>
+                {currentQuestion.choices.map((choice) => (
+                  <div key={choice.id} className="rounded-md border px-3 py-2">
+                    <p className="font-medium">
+                      {choice.choice_label}. {choice.choice_text}
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      {choice.explanation || "No explanation provided."}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 

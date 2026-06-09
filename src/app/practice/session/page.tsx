@@ -33,6 +33,8 @@ type ChoiceRow = {
   question_id: string;
   choice_label: string;
   choice_text: string;
+  explanation: string | null;
+  is_correct: boolean;
   order_index: number;
 };
 
@@ -76,7 +78,7 @@ export default async function PracticeSessionPage({
 
   let questionQuery = supabase
     .from("questions")
-    .select("id, subject_id, topic_id, question_text, difficulty")
+    .select("id, subject_id, topic_id, question_text, difficulty, rationale")
     .eq("group_id", context.activeGroup.id)
     .eq("exam_program_id", context.activeExamProgram.id)
     .eq("status", "published")
@@ -107,9 +109,11 @@ export default async function PracticeSessionPage({
       { data: subjectRows },
       { data: topicRows },
     ] = await Promise.all([
-      supabase
-        .from("choices")
-        .select("id, question_id, choice_label, choice_text, order_index")
+        supabase
+          .from("choices")
+          .select(
+            "id, question_id, choice_label, choice_text, explanation, is_correct, order_index",
+          )
         .in("question_id", questionIds)
         .order("order_index", { ascending: true }),
       supabase
@@ -145,12 +149,15 @@ export default async function PracticeSessionPage({
     id: question.id,
     question_text: question.question_text,
     difficulty: question.difficulty,
+    rationale: question.rationale ?? "",
     subjectName: subjectNameById.get(question.subject_id) ?? "Subject",
     topicName: topicNameById.get(question.topic_id) ?? "Topic",
     choices: (choicesByQuestionId.get(question.id) ?? []).map((choice) => ({
       id: choice.id,
       choice_label: choice.choice_label,
       choice_text: choice.choice_text,
+      explanation: choice.explanation,
+      is_correct: choice.is_correct,
     })),
   }));
   const userName =

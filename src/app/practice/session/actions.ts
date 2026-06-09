@@ -20,6 +20,7 @@ const attemptSchema = z.object({
       },
     ),
   timeSpentSeconds: z.coerce.number().int().min(0).nullable(),
+  confidenceRating: z.coerce.number().int().min(1).max(5).nullable(),
 });
 
 export type SavePracticeAttemptResult = {
@@ -46,6 +47,7 @@ export async function savePracticeAttemptAction(
     selectedChoiceId: formData.get("selectedChoiceId"),
     attemptType: formData.get("attemptType"),
     timeSpentSeconds: nullableSeconds(formData.get("timeSpentSeconds")),
+    confidenceRating: nullableSeconds(formData.get("confidenceRating")),
   });
 
   if (!parsed.success) {
@@ -73,6 +75,7 @@ export async function savePracticeAttemptAction(
       selected_choice_id: parsed.data.selectedChoiceId,
       attempt_type: parsed.data.attemptType,
       time_spent_seconds: parsed.data.timeSpentSeconds,
+      confidence_rating: parsed.data.confidenceRating,
     })
     .select("id, is_correct")
     .single();
