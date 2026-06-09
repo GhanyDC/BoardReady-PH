@@ -1,5 +1,7 @@
 import Link from "next/link";
 import {
+  AlertTriangle,
+  BarChart3,
   BookOpenCheck,
   BookOpenText,
   ClipboardList,
@@ -53,6 +55,18 @@ export function AppShell({
       href: "/missed-questions",
       label: "Missed Questions",
       icon: RotateCcw,
+      show: true,
+    },
+    {
+      href: "/weak-areas",
+      label: "Weak Areas",
+      icon: AlertTriangle,
+      show: true,
+    },
+    {
+      href: "/analytics",
+      label: "Analytics",
+      icon: BarChart3,
       show: true,
     },
     {

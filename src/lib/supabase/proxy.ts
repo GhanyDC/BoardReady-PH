@@ -5,6 +5,7 @@ import { getSupabaseConfig } from "@/lib/env";
 import type { Database } from "@/lib/types";
 
 const protectedPrefixes = [
+  "/analytics",
   "/dashboard",
   "/admin",
   "/missed-questions",
@@ -14,6 +15,7 @@ const protectedPrefixes = [
   "/study-habits",
   "/study-logs",
   "/study-timer",
+  "/weak-areas",
 ];
 const authPrefixes = ["/login", "/signup"];
 
