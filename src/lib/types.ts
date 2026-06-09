@@ -365,6 +365,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      external_drill_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string;
+          topic_id: string | null;
+          drill_title: string;
+          source_label: string | null;
+          total_items: number;
+          score: number;
+          percentage: number;
+          mistake_notes: string | null;
+          weak_topic_notes: string | null;
+          date_taken: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string;
+          topic_id?: string | null;
+          drill_title: string;
+          source_label?: string | null;
+          total_items: number;
+          score: number;
+          mistake_notes?: string | null;
+          weak_topic_notes?: string | null;
+          date_taken?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          subject_id?: string;
+          topic_id?: string | null;
+          drill_title?: string;
+          source_label?: string | null;
+          total_items?: number;
+          score?: number;
+          mistake_notes?: string | null;
+          weak_topic_notes?: string | null;
+          date_taken?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       subjects: {
         Row: {
           id: string;
@@ -704,6 +759,16 @@ export type Database = {
           target_exam_program_id: string;
           target_question_id: string;
           target_selected_choice_id: string;
+        };
+        Returns: boolean;
+      };
+      can_manage_external_drill_log: {
+        Args: {
+          target_user_id: string;
+          target_group_id: string;
+          target_exam_program_id: string;
+          target_subject_id: string;
+          target_topic_id: string | null;
         };
         Returns: boolean;
       };
