@@ -25,6 +25,7 @@ type PracticeSessionPageProps = {
     difficulty?: string;
     count?: string;
     mode?: string;
+    question?: string;
   }>;
 };
 
@@ -72,8 +73,13 @@ export default async function PracticeSessionPage({
   const difficulty = params?.difficulty ?? "";
   const count = parseCount(params?.count);
   const mode = params?.mode ?? "mixed_subject";
+  const retryQuestionId = params?.question ?? "";
   const attemptType =
-    mode === "topic_drill" || topic ? "topic_drill" : "practice_drill";
+    retryQuestionId
+      ? "missed_question_review"
+      : mode === "topic_drill" || topic
+        ? "topic_drill"
+        : "practice_drill";
   const supabase = await createClient();
 
   let questionQuery = supabase
@@ -88,6 +94,10 @@ export default async function PracticeSessionPage({
     questionQuery = questionQuery.eq("subject_id", subject);
   }
 
+  if (retryQuestionId) {
+    questionQuery = questionQuery.eq("id", retryQuestionId);
+  }
+
   if (topic) {
     questionQuery = questionQuery.eq("topic_id", topic);
   }
@@ -97,7 +107,9 @@ export default async function PracticeSessionPage({
   }
 
   const { data: questionPool, error } = await questionQuery;
-  const selectedQuestions = shuffle(questionPool ?? []).slice(0, count);
+  const selectedQuestions = retryQuestionId
+    ? questionPool ?? []
+    : shuffle(questionPool ?? []).slice(0, count);
   const questionIds = selectedQuestions.map((question) => question.id);
   let choices: ChoiceRow[] = [];
   let subjects: NameRow[] = [];

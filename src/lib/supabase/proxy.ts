@@ -7,6 +7,7 @@ import type { Database } from "@/lib/types";
 const protectedPrefixes = [
   "/dashboard",
   "/admin",
+  "/missed-questions",
   "/onboarding",
   "/practice",
   "/submit-question",
