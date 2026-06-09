@@ -8,8 +8,10 @@ import {
   LogOut,
   MessageSquarePlus,
   NotebookTabs,
+  RotateCcw,
   ShieldCheck,
   SlidersHorizontal,
+  Target,
   Timer,
 } from "lucide-react";
 
@@ -39,6 +41,18 @@ export function AppShell({
       href: "/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
+      show: true,
+    },
+    {
+      href: "/practice",
+      label: "Practice",
+      icon: Target,
+      show: true,
+    },
+    {
+      href: "/missed-questions",
+      label: "Missed Questions",
+      icon: RotateCcw,
       show: true,
     },
     {
