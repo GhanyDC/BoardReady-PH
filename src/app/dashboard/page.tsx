@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   BarChart3,
   CalendarDays,
   CheckCircle2,
@@ -22,6 +23,13 @@ import { requireCurrentUser } from "@/lib/current-user";
 import { attemptTypeLabel } from "@/lib/practice";
 import { formatRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
+import {
+  formatPercent,
+  getPerformanceAnalytics,
+  getWeakAreas,
+  minimumWeakAreaAttempts,
+  summarizePerformance,
+} from "@/lib/analytics";
 import {
   activityLabel,
   formatDuration,
@@ -116,6 +124,11 @@ export default async function DashboardPage() {
   const weekStart = startOfLocalWeek(new Date());
   const nextWeekStart = new Date(weekStart);
   nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+  const analyticsContext = {
+    userId: context.user.id,
+    groupId: context.activeGroup.id,
+    examProgramId: context.activeExamProgram.id,
+  };
 
   const [
     { data: subjects },
@@ -124,6 +137,9 @@ export default async function DashboardPage() {
     { data: latestSession },
     { data: todayAttempts },
     { data: latestAttempt },
+    { data: weekAttempts },
+    performanceResult,
+    weakAreasResult,
   ] = await Promise.all([
     supabase
       .from("subjects")
@@ -175,6 +191,16 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("question_attempts")
+      .select("id")
+      .eq("user_id", context.user.id)
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .gte("created_at", weekStart.toISOString())
+      .lt("created_at", nextWeekStart.toISOString()),
+    getPerformanceAnalytics(supabase, analyticsContext),
+    getWeakAreas(supabase, analyticsContext),
   ]);
 
   const subjectNameById = new Map(
@@ -207,6 +233,19 @@ export default async function DashboardPage() {
   const todayCorrectCount = (todayAttempts ?? []).filter(
     (attempt) => attempt.is_correct,
   ).length;
+  const weeklyAttemptCount = (weekAttempts ?? []).length;
+  const analyticsSummary = summarizePerformance(
+    performanceResult.subjects,
+    performanceResult.topics,
+  );
+  const topWeakAreas = weakAreasResult.data
+    .filter((area) => area.isWeak)
+    .slice(0, 3);
+  const hasInsufficientPracticeData =
+    analyticsSummary.totalAttempts < minimumWeakAreaAttempts ||
+    (analyticsSummary.totalAttempts > 0 &&
+      weakAreasResult.data.length === 0 &&
+      analyticsSummary.insufficientTopics.length > 0);
 
   const metricCards = [
     {
@@ -398,16 +437,106 @@ export default async function DashboardPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Practice Notes</CardTitle>
-              <CardDescription>
-                Readiness scoring and weak-area tracking are intentionally left
-                for later sprints.
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <CardTitle>Learning Progress</CardTitle>
+                <CardDescription>
+                  Practice accuracy and weak-area signals.
+                </CardDescription>
+              </div>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+                <BarChart3 aria-hidden="true" />
+              </div>
             </CardHeader>
-            <CardContent className="text-sm leading-6 text-muted-foreground">
-              Sprint 4 only tracks practice attempts, immediate feedback, and
-              missed-question review.
+            <CardContent className="grid gap-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md border px-3 py-3">
+                  <p className="text-2xl font-semibold">
+                    {formatPercent(analyticsSummary.overallAccuracy)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Practice Accuracy
+                  </p>
+                </div>
+                <div className="rounded-md border px-3 py-3">
+                  <p className="text-2xl font-semibold">{weeklyAttemptCount}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Answered this week
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-2 text-sm">
+                <div className="rounded-md border px-3 py-3">
+                  <p className="font-medium">Weakest subject</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {analyticsSummary.weakestSubject
+                      ? `${
+                          analyticsSummary.weakestSubject.subject_name
+                        } / ${formatPercent(
+                          analyticsSummary.weakestSubject.accuracy,
+                        )}`
+                      : "Not enough data yet."}
+                  </p>
+                </div>
+                <div className="rounded-md border px-3 py-3">
+                  <p className="font-medium">Weakest topic</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {analyticsSummary.weakestTopic
+                      ? `${analyticsSummary.weakestTopic.topic_name} / ${formatPercent(
+                          analyticsSummary.weakestTopic.accuracy,
+                        )}`
+                      : "Not enough data yet."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-md bg-muted px-3 py-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle
+                    className="size-4 text-destructive"
+                    aria-hidden="true"
+                  />
+                  <p className="font-medium">Top weak areas</p>
+                </div>
+                {topWeakAreas.length > 0 ? (
+                  <div className="mt-3 grid gap-2">
+                    {topWeakAreas.map((area) => (
+                      <div
+                        key={area.id}
+                        className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">
+                            {area.topicName}
+                          </span>
+                          <span className="block truncate text-muted-foreground">
+                            {area.subjectName}
+                          </span>
+                        </span>
+                        <span className="shrink-0 font-medium text-destructive">
+                          {formatPercent(area.accuracy)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-muted-foreground">
+                    {hasInsufficientPracticeData
+                      ? "Answer more topic-focused questions to unlock weak-area signals."
+                      : "No weak topics below 70% right now."}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline">
+                  <Link href="/analytics">View analytics</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/weak-areas">View weak areas</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>
