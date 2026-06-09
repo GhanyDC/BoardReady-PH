@@ -13,13 +13,20 @@ Use this after applying all migrations to a fresh or test Supabase project.
 - Confirm `weak_areas` has no image, file, scan, OCR, upload, storage, mock exam, external drill, or readiness-score columns.
 - Confirm `weak_areas` includes `user_id`, `group_id`, and `exam_program_id`.
 - Confirm the unique context key prevents duplicate weak-area rows for the same user, group, exam track, and topic.
+- Confirm `weak_areas` direct insert, update, and delete policies for authenticated clients are absent.
+- Confirm direct insert, update, and delete grants on `weak_areas` are revoked from `authenticated`.
+- Confirm `docs/analytics-notes.md` documents `weak_areas` as a topic learning-status snapshot.
 
 ## RLS And Isolation
 
 - As reviewer A, confirm only reviewer A's `weak_areas` rows are selectable.
 - As reviewer A, confirm reviewer B's `weak_areas` rows are not selectable.
+- As reviewer A, confirm directly inserting reviewer A's own `weak_areas` row fails.
+- As reviewer A, confirm directly updating reviewer A's own `weak_areas` row fails.
+- As reviewer A, confirm directly deleting reviewer A's own `weak_areas` row fails.
 - As reviewer A, confirm inserting or updating a `weak_areas` row for reviewer B fails.
 - As reviewer A, confirm `refresh_user_weak_areas` only refreshes reviewer A's active group and exam track.
+- As reviewer A, confirm `refresh_user_weak_areas` still creates or refreshes reviewer A's expected rows.
 - As reviewer A, confirm refreshing another group or exam track fails unless that group is the active accessible context.
 - As an active group admin, confirm group summary analytics can be queried only within the active group/exam context.
 - As a super admin, confirm global visibility matches the current `is_super_admin()` behavior.
@@ -31,6 +38,8 @@ Use this after applying all migrations to a fresh or test Supabase project.
 - Create at least five attempts with accuracy from 60% to below 70%; confirm priority is `medium`.
 - Create at least five attempts with accuracy from 70% to below 80%; confirm priority is `watchlist`.
 - Create at least five attempts with accuracy 80% or higher; confirm priority is `cleared`.
+- Confirm `critical`, `high`, and `medium` are treated as true weak areas below 70%.
+- Confirm `watchlist` and `cleared` rows are expected snapshot rows, not bugs.
 - Confirm topics with fewer than five attempts do not appear in `weak_areas`.
 - Confirm `accuracy`, `total_attempts`, `correct_attempts`, `wrong_attempts`, `average_confidence`, and `last_attempted_at` update after refresh.
 - Confirm only attempts from the active user, active group, and active exam program are included.
@@ -46,6 +55,8 @@ Use this after applying all migrations to a fresh or test Supabase project.
 - Confirm weakest subject is the attempted subject with the lowest accuracy.
 - Confirm weakest topic is the attempted topic with the lowest accuracy.
 - Confirm topics below five attempts are treated as insufficient data.
+- Confirm the high-performing topic helper is named `topHighPerformingTopics`.
+- Confirm no helper, variable, or UI copy claims "improving" without trend-window logic.
 
 ## Pages
 
@@ -83,10 +94,12 @@ Use this after applying all migrations to a fresh or test Supabase project.
 ## Checks
 
 - Run `npm run lint`.
-- Run `npm run typecheck` if the script exists.
+- Run `npm run typecheck`.
+- Confirm the `typecheck` script exists and passes.
 - Run `npm run build`.
 - Confirm the working tree is clean.
 - Confirm Sprint 5 changes are committed as separate logical units.
+- Confirm Sprint 5.1 cleanup changes are committed as separate logical units.
 
 ## Out Of Scope Guardrails
 
