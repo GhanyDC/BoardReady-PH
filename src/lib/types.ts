@@ -269,6 +269,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      question_attempts: {
+        Row: {
+          id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          question_id: string;
+          selected_choice_id: string;
+          is_correct: boolean;
+          confidence_rating: number | null;
+          time_spent_seconds: number | null;
+          attempt_type: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          question_id: string;
+          selected_choice_id: string;
+          is_correct?: boolean;
+          confidence_rating?: number | null;
+          time_spent_seconds?: number | null;
+          attempt_type?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          question_id?: string;
+          selected_choice_id?: string;
+          is_correct?: boolean;
+          confidence_rating?: number | null;
+          time_spent_seconds?: number | null;
+          attempt_type?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       subjects: {
         Row: {
           id: string;
@@ -562,6 +604,16 @@ export type Database = {
           target_question_id: string;
         };
         Returns: undefined;
+      };
+      can_create_question_attempt: {
+        Args: {
+          target_user_id: string;
+          target_group_id: string;
+          target_exam_program_id: string;
+          target_question_id: string;
+          target_selected_choice_id: string;
+        };
+        Returns: boolean;
       };
       is_group_admin: {
         Args: {
