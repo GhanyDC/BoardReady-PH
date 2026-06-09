@@ -29,6 +29,19 @@ type ExternalDrillFormProps = {
   subjects: SubjectOption[];
   topics: TopicOption[];
   defaultDate: string;
+  defaults?: {
+    id?: string;
+    drillTitle?: string;
+    sourceLabel?: string | null;
+    subjectId?: string;
+    topicId?: string | null;
+    totalItems?: number;
+    score?: number;
+    dateTaken?: string;
+    mistakeNotes?: string | null;
+    weakTopicNotes?: string | null;
+  };
+  submitLabel?: string;
 };
 
 function formatPercentage(score: string, totalItems: string) {
@@ -53,11 +66,16 @@ export function ExternalDrillForm({
   subjects,
   topics,
   defaultDate,
+  defaults,
+  submitLabel = "Save external drill",
 }: ExternalDrillFormProps) {
   const [state, formAction, pending] = useActionState(action, {});
-  const [subjectId, setSubjectId] = useState("");
-  const [score, setScore] = useState("");
-  const [totalItems, setTotalItems] = useState("");
+  const [subjectId, setSubjectId] = useState(defaults?.subjectId ?? "");
+  const [topicId, setTopicId] = useState(defaults?.topicId ?? "");
+  const [score, setScore] = useState(defaults?.score?.toString() ?? "");
+  const [totalItems, setTotalItems] = useState(
+    defaults?.totalItems?.toString() ?? "",
+  );
 
   const filteredTopics = useMemo(
     () => topics.filter((topic) => topic.subject_id === subjectId),
@@ -68,6 +86,10 @@ export function ExternalDrillForm({
 
   return (
     <form action={formAction} className="grid gap-6">
+      {defaults?.id ? (
+        <input type="hidden" name="logId" value={defaults.id} />
+      ) : null}
+
       <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
         Log your score from a hardcopy/offline drill. Do not upload photos,
         scans, or copyrighted materials.
@@ -80,6 +102,7 @@ export function ExternalDrillForm({
             id="drillTitle"
             name="drillTitle"
             placeholder="Example: Assessment diagnostic set"
+            defaultValue={defaults?.drillTitle ?? ""}
             required
             maxLength={180}
           />
@@ -96,6 +119,7 @@ export function ExternalDrillForm({
             id="sourceLabel"
             name="sourceLabel"
             placeholder="Optional"
+            defaultValue={defaults?.sourceLabel ?? ""}
             maxLength={160}
           />
           {state.errors?.sourceLabel ? (
@@ -113,7 +137,10 @@ export function ExternalDrillForm({
             id="subjectId"
             name="subjectId"
             value={subjectId}
-            onChange={(event) => setSubjectId(event.target.value)}
+            onChange={(event) => {
+              setSubjectId(event.target.value);
+              setTopicId("");
+            }}
             disabled={noSubjects}
             required
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
@@ -139,6 +166,8 @@ export function ExternalDrillForm({
           <select
             id="topicId"
             name="topicId"
+            value={topicId}
+            onChange={(event) => setTopicId(event.target.value)}
             disabled={!subjectId || filteredTopics.length === 0}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
           >
@@ -198,7 +227,7 @@ export function ExternalDrillForm({
             id="dateTaken"
             name="dateTaken"
             type="date"
-            defaultValue={defaultDate}
+            defaultValue={defaults?.dateTaken ?? defaultDate}
             required
           />
           {state.errors?.dateTaken ? (
@@ -227,6 +256,7 @@ export function ExternalDrillForm({
             rows={5}
             maxLength={4000}
             placeholder="Topics or concepts to revisit"
+            defaultValue={defaults?.weakTopicNotes ?? ""}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
           {state.errors?.weakTopicNotes ? (
@@ -244,6 +274,7 @@ export function ExternalDrillForm({
             rows={5}
             maxLength={4000}
             placeholder="Score patterns, mistakes, or next steps"
+            defaultValue={defaults?.mistakeNotes ?? ""}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
           {state.errors?.mistakeNotes ? (
@@ -270,7 +301,7 @@ export function ExternalDrillForm({
         ) : (
           <Save aria-hidden="true" />
         )}
-        Save external drill
+        {submitLabel}
       </Button>
     </form>
   );

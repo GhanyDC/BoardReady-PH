@@ -53,9 +53,13 @@ const externalDrillSchema = z
       });
     }
   });
+const externalDrillUpdateSchema = externalDrillSchema.extend({
+  logId: z.string().uuid("Choose an external drill log."),
+});
 
 export type ExternalDrillFormState = {
   errors?: {
+    logId?: string[];
     drillTitle?: string[];
     sourceLabel?: string[];
     subjectId?: string[];
@@ -88,11 +92,8 @@ function isValidDateInput(value: string) {
     && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`));
 }
 
-export async function createExternalDrillLogAction(
-  _state: ExternalDrillFormState,
-  formData: FormData,
-): Promise<ExternalDrillFormState> {
-  const parsed = externalDrillSchema.safeParse({
+function parseExternalDrillForm(formData: FormData) {
+  return {
     drillTitle: formData.get("drillTitle"),
     sourceLabel: nullableText(formData.get("sourceLabel")),
     subjectId: formData.get("subjectId"),
@@ -102,19 +103,21 @@ export async function createExternalDrillLogAction(
     dateTaken: formData.get("dateTaken"),
     mistakeNotes: nullableText(formData.get("mistakeNotes")),
     weakTopicNotes: nullableText(formData.get("weakTopicNotes")),
-  });
+  };
+}
 
-  if (!parsed.success) {
-    return {
-      errors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
+async function validateActiveSubjectAndTopic(
+  subjectId: string,
+  topicId: string | null,
+) {
   const context = await requireMembership();
 
   if (!context.activeGroup || !context.activeExamProgram) {
     return {
-      message: "Join a group before logging external drills.",
+      context,
+      error: {
+        message: "Join a group before logging external drills.",
+      } satisfies ExternalDrillFormState,
     };
   }
 
@@ -122,7 +125,7 @@ export async function createExternalDrillLogAction(
   const { data: subject } = await supabase
     .from("subjects")
     .select("id")
-    .eq("id", parsed.data.subjectId)
+    .eq("id", subjectId)
     .eq("group_id", context.activeGroup.id)
     .eq("exam_program_id", context.activeExamProgram.id)
     .eq("is_active", true)
@@ -130,35 +133,69 @@ export async function createExternalDrillLogAction(
 
   if (!subject) {
     return {
-      errors: {
-        subjectId: ["Choose a subject from your active group and exam track."],
-      },
+      context,
+      error: {
+        errors: {
+          subjectId: ["Choose a subject from your active group and exam track."],
+        },
+      } satisfies ExternalDrillFormState,
     };
   }
 
-  if (parsed.data.topicId) {
+  if (topicId) {
     const { data: topic } = await supabase
       .from("topics")
       .select("id")
-      .eq("id", parsed.data.topicId)
-      .eq("subject_id", parsed.data.subjectId)
+      .eq("id", topicId)
+      .eq("subject_id", subjectId)
       .eq("group_id", context.activeGroup.id)
       .eq("is_active", true)
       .maybeSingle();
 
     if (!topic) {
       return {
-        errors: {
-          topicId: ["Choose a topic that belongs to the selected subject."],
-        },
+        context,
+        error: {
+          errors: {
+            topicId: ["Choose a topic that belongs to the selected subject."],
+          },
+        } satisfies ExternalDrillFormState,
       };
     }
   }
 
+  return {
+    context,
+    error: null,
+  };
+}
+
+export async function createExternalDrillLogAction(
+  _state: ExternalDrillFormState,
+  formData: FormData,
+): Promise<ExternalDrillFormState> {
+  const parsed = externalDrillSchema.safeParse(parseExternalDrillForm(formData));
+
+  if (!parsed.success) {
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { context, error: validationError } = await validateActiveSubjectAndTopic(
+    parsed.data.subjectId,
+    parsed.data.topicId,
+  );
+
+  if (validationError) {
+    return validationError;
+  }
+
+  const supabase = await createClient();
   const { error } = await supabase.from("external_drill_logs").insert({
     user_id: context.user.id,
-    group_id: context.activeGroup.id,
-    exam_program_id: context.activeExamProgram.id,
+    group_id: context.activeGroup!.id,
+    exam_program_id: context.activeExamProgram!.id,
     subject_id: parsed.data.subjectId,
     topic_id: parsed.data.topicId,
     drill_title: parsed.data.drillTitle,
@@ -176,5 +213,91 @@ export async function createExternalDrillLogAction(
     };
   }
 
-  redirect("/external-drills/new?created=1");
+  redirect("/external-drills?created=1");
+}
+
+export async function updateExternalDrillLogAction(
+  _state: ExternalDrillFormState,
+  formData: FormData,
+): Promise<ExternalDrillFormState> {
+  const parsed = externalDrillUpdateSchema.safeParse({
+    logId: formData.get("logId"),
+    ...parseExternalDrillForm(formData),
+  });
+
+  if (!parsed.success) {
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { context, error: validationError } = await validateActiveSubjectAndTopic(
+    parsed.data.subjectId,
+    parsed.data.topicId,
+  );
+
+  if (validationError) {
+    return validationError;
+  }
+
+  const supabase = await createClient();
+  const { data: updatedLog, error } = await supabase
+    .from("external_drill_logs")
+    .update({
+      subject_id: parsed.data.subjectId,
+      topic_id: parsed.data.topicId,
+      drill_title: parsed.data.drillTitle,
+      source_label: parsed.data.sourceLabel,
+      total_items: parsed.data.totalItems,
+      score: parsed.data.score,
+      date_taken: parsed.data.dateTaken,
+      mistake_notes: parsed.data.mistakeNotes,
+      weak_topic_notes: parsed.data.weakTopicNotes,
+    })
+    .eq("id", parsed.data.logId)
+    .eq("user_id", context.user.id)
+    .eq("group_id", context.activeGroup!.id)
+    .eq("exam_program_id", context.activeExamProgram!.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return {
+      message: error.message,
+    };
+  }
+
+  if (!updatedLog) {
+    return {
+      message: "External drill log was not found.",
+    };
+  }
+
+  redirect(`/external-drills/${parsed.data.logId}?updated=1`);
+}
+
+export async function deleteExternalDrillLogAction(formData: FormData) {
+  const logId = formData.get("logId")?.toString() ?? "";
+  const parsed = z.string().uuid().safeParse(logId);
+
+  if (!parsed.success) {
+    redirect("/external-drills?error=invalid-log");
+  }
+
+  const context = await requireMembership();
+
+  if (!context.activeGroup || !context.activeExamProgram) {
+    redirect("/onboarding");
+  }
+
+  const supabase = await createClient();
+  await supabase
+    .from("external_drill_logs")
+    .delete()
+    .eq("id", parsed.data)
+    .eq("user_id", context.user.id)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id);
+
+  redirect("/external-drills?deleted=1");
 }
