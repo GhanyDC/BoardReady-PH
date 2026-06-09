@@ -311,6 +311,60 @@ export type Database = {
         };
         Relationships: [];
       };
+      weak_areas: {
+        Row: {
+          id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string;
+          topic_id: string;
+          accuracy: number;
+          total_attempts: number;
+          correct_attempts: number;
+          wrong_attempts: number;
+          average_confidence: number | null;
+          priority: string;
+          last_attempted_at: string;
+          last_updated: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string;
+          topic_id: string;
+          accuracy: number;
+          total_attempts: number;
+          correct_attempts: number;
+          wrong_attempts: number;
+          average_confidence?: number | null;
+          priority: string;
+          last_attempted_at: string;
+          last_updated?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          subject_id?: string;
+          topic_id?: string;
+          accuracy?: number;
+          total_attempts?: number;
+          correct_attempts?: number;
+          wrong_attempts?: number;
+          average_confidence?: number | null;
+          priority?: string;
+          last_attempted_at?: string;
+          last_updated?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       subjects: {
         Row: {
           id: string;
@@ -489,7 +543,45 @@ export type Database = {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      subject_attempt_analytics: {
+        Row: {
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string;
+          subject_name: string;
+          board_weight: number;
+          total_attempts: number;
+          correct_attempts: number;
+          wrong_attempts: number;
+          accuracy: number;
+          confidence_attempts: number;
+          average_confidence: number | null;
+          latest_attempted_at: string;
+        };
+        Relationships: [];
+      };
+      topic_attempt_analytics: {
+        Row: {
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string;
+          subject_name: string;
+          topic_id: string;
+          topic_name: string;
+          total_attempts: number;
+          correct_attempts: number;
+          wrong_attempts: number;
+          accuracy: number;
+          confidence_attempts: number;
+          average_confidence: number | null;
+          latest_attempted_at: string;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       join_group_with_invite: {
         Args: {
@@ -614,6 +706,35 @@ export type Database = {
           target_selected_choice_id: string;
         };
         Returns: boolean;
+      };
+      weak_area_priority: {
+        Args: {
+          target_accuracy: number;
+        };
+        Returns: string;
+      };
+      refresh_user_weak_areas: {
+        Args: {
+          target_group_id: string;
+          target_exam_program_id: string;
+        };
+        Returns: {
+          id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          subject_id: string;
+          topic_id: string;
+          accuracy: number;
+          total_attempts: number;
+          correct_attempts: number;
+          wrong_attempts: number;
+          average_confidence: number | null;
+          priority: string;
+          last_attempted_at: string;
+          last_updated: string;
+          created_at: string;
+        }[];
       };
       is_group_admin: {
         Args: {
