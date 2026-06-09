@@ -13,3 +13,7 @@ export const attemptTypes = [
 export function practiceModeLabel(value: string) {
   return practiceModes.find((mode) => mode.value === value)?.label ?? value;
 }
+
+export function attemptTypeLabel(value: string) {
+  return attemptTypes.find((attemptType) => attemptType.value === value)?.label ?? value;
+}

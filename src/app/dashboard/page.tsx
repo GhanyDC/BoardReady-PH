@@ -1,8 +1,10 @@
 import {
   BarChart3,
   CalendarDays,
+  CheckCircle2,
   Clock3,
   ListChecks,
+  Target,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { requireCurrentUser } from "@/lib/current-user";
+import { attemptTypeLabel } from "@/lib/practice";
 import { formatRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -67,6 +70,14 @@ function formatTargetDate(value?: string | null) {
   }).format(new Date(`${value}T00:00:00`));
 }
 
+function formatAccuracy(correct: number, total: number) {
+  if (total === 0) {
+    return "N/A";
+  }
+
+  return `${Math.round((correct / total) * 100)}%`;
+}
+
 export default async function DashboardPage() {
   const context = await requireCurrentUser();
   const userName =
@@ -111,6 +122,8 @@ export default async function DashboardPage() {
     { data: preferences },
     { data: weekSessions },
     { data: latestSession },
+    { data: todayAttempts },
+    { data: latestAttempt },
   ] = await Promise.all([
     supabase
       .from("subjects")
@@ -145,6 +158,23 @@ export default async function DashboardPage() {
       .order("started_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("question_attempts")
+      .select("id, is_correct, created_at")
+      .eq("user_id", context.user.id)
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .gte("created_at", todayStart.toISOString())
+      .lt("created_at", tomorrowStart.toISOString()),
+    supabase
+      .from("question_attempts")
+      .select("id, is_correct, confidence_rating, attempt_type, created_at")
+      .eq("user_id", context.user.id)
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const subjectNameById = new Map(
@@ -173,6 +203,10 @@ export default async function DashboardPage() {
         preferences.preferred_session_length_minutes
       }m sessions`
     : "Set goals and preferences in Study Habits.";
+  const todayAttemptCount = (todayAttempts ?? []).length;
+  const todayCorrectCount = (todayAttempts ?? []).filter(
+    (attempt) => attempt.is_correct,
+  ).length;
 
   const metricCards = [
     {
@@ -285,6 +319,97 @@ export default async function DashboardPage() {
               </Card>
             );
           })}
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <CardTitle>Practice Activity</CardTitle>
+                <CardDescription>
+                  Basic drill activity for your active group and exam track.
+                </CardDescription>
+              </div>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+                <Target aria-hidden="true" />
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-md border px-3 py-3">
+                  <p className="text-2xl font-semibold">{todayAttemptCount}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Answered today
+                  </p>
+                </div>
+                <div className="rounded-md border px-3 py-3">
+                  <p className="text-2xl font-semibold">{todayCorrectCount}</p>
+                  <p className="text-sm text-muted-foreground">Correct today</p>
+                </div>
+                <div className="rounded-md border px-3 py-3">
+                  <p className="text-2xl font-semibold">
+                    {formatAccuracy(todayCorrectCount, todayAttemptCount)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Accuracy today</p>
+                </div>
+              </div>
+
+              {latestAttempt ? (
+                <div className="flex flex-col gap-3 rounded-md border px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium">
+                      Latest: {attemptTypeLabel(latestAttempt.attempt_type)}
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      {new Intl.DateTimeFormat("en", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(new Date(latestAttempt.created_at))}
+                      {latestAttempt.confidence_rating
+                        ? ` / Confidence ${latestAttempt.confidence_rating}/5`
+                        : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2
+                      className={
+                        latestAttempt.is_correct
+                          ? "size-5 text-emerald-600"
+                          : "size-5 text-destructive"
+                      }
+                      aria-hidden="true"
+                    />
+                    <span>
+                      {latestAttempt.is_correct ? "Correct" : "Incorrect"}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-md border px-3 py-3 text-sm text-muted-foreground">
+                  No practice attempts yet. Start a drill when published
+                  questions are available.
+                </div>
+              )}
+
+              <Button asChild className="w-fit">
+                <Link href="/practice">Start practice</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Practice Notes</CardTitle>
+              <CardDescription>
+                Readiness scoring and weak-area tracking are intentionally left
+                for later sprints.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm leading-6 text-muted-foreground">
+              Sprint 4 only tracks practice attempts, immediate feedback, and
+              missed-question review.
+            </CardContent>
+          </Card>
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
