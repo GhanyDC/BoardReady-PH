@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  ClipboardList,
   ListChecks,
   Target,
   TrendingUp,
@@ -30,6 +31,10 @@ import {
   minimumWeakAreaAttempts,
   summarizePerformance,
 } from "@/lib/analytics";
+import {
+  formatExternalDrillPercentage,
+  getExternalDrillSummary,
+} from "@/lib/external-drills";
 import {
   activityLabel,
   formatDuration,
@@ -140,6 +145,7 @@ export default async function DashboardPage() {
     { data: weekAttempts },
     performanceResult,
     weakAreasResult,
+    externalDrillSummary,
   ] = await Promise.all([
     supabase
       .from("subjects")
@@ -201,6 +207,7 @@ export default async function DashboardPage() {
       .lt("created_at", nextWeekStart.toISOString()),
     getPerformanceAnalytics(supabase, analyticsContext),
     getWeakAreas(supabase, analyticsContext),
+    getExternalDrillSummary(supabase, analyticsContext),
   ]);
 
   const subjectNameById = new Map(
@@ -540,6 +547,92 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </section>
+
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle>External Drill Performance</CardTitle>
+              <CardDescription>
+                Offline drill scores tracked separately from practice accuracy.
+              </CardDescription>
+            </div>
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+              <ClipboardList aria-hidden="true" />
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {externalDrillSummary.totalDrills === 0 ? (
+              <div className="rounded-md border px-3 py-3 text-sm text-muted-foreground">
+                No external drill scores logged yet.
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {externalDrillSummary.latestDrill
+                        ? `${externalDrillSummary.latestDrill.score}/${externalDrillSummary.latestDrill.total_items}`
+                        : "N/A"}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Latest score
+                    </p>
+                  </div>
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {formatExternalDrillPercentage(
+                        externalDrillSummary.averagePercentage,
+                      )}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      External average
+                    </p>
+                  </div>
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {externalDrillSummary.totalDrills}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Drills logged
+                    </p>
+                  </div>
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {externalDrillSummary.weakestSubject
+                        ? externalDrillSummary.weakestSubject.subjectName
+                        : "N/A"}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Weakest external subject
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-md bg-muted px-3 py-3 text-sm">
+                  <p className="font-medium">Latest external drill</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {externalDrillSummary.latestDrill
+                      ? `${externalDrillSummary.latestDrill.drill_title} / ${
+                          externalDrillSummary.latestDrill.subjectName
+                        } / ${formatExternalDrillPercentage(
+                          Number(externalDrillSummary.latestDrill.percentage),
+                        )}`
+                      : "No external drill logs yet."}
+                  </p>
+                </div>
+              </>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
+                <Link href="/external-drills/new">Log external drill</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/external-drills">View external drills</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <Card>
