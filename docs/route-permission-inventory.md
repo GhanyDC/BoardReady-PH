@@ -11,11 +11,11 @@ Sprint 10 audit snapshot. This inventory documents intended access, server-side 
 - `requireAdminContext`: page/action requires admin or super_admin role for the active group/exam and redirects reviewers to `/dashboard`.
 - `RLS`: Supabase row level security remains the final data isolation boundary.
 
-## Current Middleware Gap
+## Middleware Coverage
 
-Before Sprint 10 auth hardening, `src/lib/supabase/proxy.ts` lists more protected prefixes than `src/proxy.ts` actually matches. The helper protects these prefixes when invoked: `/analytics`, `/dashboard`, `/admin`, `/external-drills`, `/group-progress`, `/missed-questions`, `/onboarding`, `/practice`, `/readiness`, `/submit-question`, `/study-habits`, `/study-logs`, `/study-timer`, and `/weak-areas`.
+Sprint 10 aligns `src/lib/supabase/proxy.ts` protected prefixes with the `src/proxy.ts` matcher. Middleware now invokes the auth/session proxy for `/analytics`, `/dashboard`, `/admin`, `/external-drills`, `/group-progress`, `/missed-questions`, `/mock-exams`, `/onboarding`, `/practice`, `/readiness`, `/submit-question`, `/study-habits`, `/study-logs`, `/study-timer`, and `/weak-areas`.
 
-However, `src/proxy.ts` currently invokes proxy only for `/dashboard`, `/admin`, `/group-progress`, `/onboarding`, `/readiness`, `/login`, and `/signup`. Routes marked `Gap before Sprint 10 fix` below rely on server-side guards and RLS but do not receive early middleware redirects until the matcher is aligned.
+Server-side guards remain required and are still the source of role and active membership enforcement. Middleware is an early redirect layer, not the only protection.
 
 ## Public and Auth Routes
 
@@ -30,22 +30,22 @@ However, `src/proxy.ts` currently invokes proxy only for `/dashboard`, `/admin`,
 | Route | Intended access | Server-side guard | Middleware coverage | Sensitive data shown | Reviewer allowed | Admin-only | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `/dashboard` | Active user; membership-dependent content | `requireCurrentUser`; active group empty state | Covered | Current user's study, practice, mock, readiness, external drill summary | Yes | No | User without active group sees onboarding prompt. |
-| `/study-habits` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Current user's study preferences | Yes | No | Server action derives user/group/exam from context. |
-| `/study-timer` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Current user's study session form and subjects/topics | Yes | No | Server action derives user/group/exam from context. |
-| `/study-logs` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Current user's study sessions and notes | Yes | No | Notes are private to owner/admin by RLS. |
-| `/practice` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Available published question counts | Yes | No | Starts drills from active group/exam. |
-| `/practice/session` | Active group member | `requireMembership`; save action requires membership | Gap before Sprint 10 fix | Published question text, choices, rationale after answer | Yes | No | Saves attempts for current user only. |
-| `/missed-questions` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Current user's missed question history | Yes | No | Cross-user attempts blocked by query and RLS. |
-| `/weak-areas` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Current user's weak area snapshot | Yes | No | Reviewer must not see other reviewers' weak areas. |
-| `/analytics` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Current user's subject/topic analytics and external drill summary | Yes | No | Reviewer-scoped analytics only. |
-| `/external-drills` | Active group member | `requireMembership`; actions require membership | Gap before Sprint 10 fix | Current user's external drill scores and notes | Yes | No | No upload/OCR/file storage. |
-| `/external-drills/new` | Active group member | `requireMembership`; create action requires membership | Gap before Sprint 10 fix | External drill entry form | Yes | No | Server derives user/group/exam from context. |
-| `/external-drills/[logId]` | Active group member | `requireMembership` | Gap before Sprint 10 fix | Current user's selected drill details and notes | Yes | No | Query filters by `id`, `user_id`, group, and exam. |
-| `/external-drills/[logId]/edit` | Active group member | `requireMembership`; update/delete actions require membership | Gap before Sprint 10 fix | Current user's drill edit form | Yes | No | Query filters by `id`, `user_id`, group, and exam. |
-| `/mock-exams` | Active group member | `requireMembership`; actions require membership | Not in protected prefix or matcher before Sprint 10 fix | Published mocks and current user's attempts | Yes | No | Needs middleware prefix added. |
-| `/mock-exams/[attemptId]/take` | Active group member | `requireMembership`; submit action requires membership | Not in protected prefix or matcher before Sprint 10 fix | Current user's in-progress attempt and published questions | Yes | No | Attempt query includes current user and active context. |
-| `/mock-exams/[attemptId]/results` | Active group member | `requireMembership` | Not in protected prefix or matcher before Sprint 10 fix | Current user's submitted attempt results | Yes | No | Attempt query includes current user and active context. |
-| `/mock-exams/[attemptId]/review` | Active group member | `requireMembership` | Not in protected prefix or matcher before Sprint 10 fix | Current user's answer review and rationales | Yes | No | Attempt query includes current user and active context. |
+| `/study-habits` | Active group member | `requireMembership` | Covered | Current user's study preferences | Yes | No | Server action derives user/group/exam from context. |
+| `/study-timer` | Active group member | `requireMembership` | Covered | Current user's study session form and subjects/topics | Yes | No | Server action derives user/group/exam from context. |
+| `/study-logs` | Active group member | `requireMembership` | Covered | Current user's study sessions and notes | Yes | No | Notes are private to owner/admin by RLS. |
+| `/practice` | Active group member | `requireMembership` | Covered | Available published question counts | Yes | No | Starts drills from active group/exam. |
+| `/practice/session` | Active group member | `requireMembership`; save action requires membership | Covered | Published question text, choices, rationale after answer | Yes | No | Saves attempts for current user only. |
+| `/missed-questions` | Active group member | `requireMembership` | Covered | Current user's missed question history | Yes | No | Cross-user attempts blocked by query and RLS. |
+| `/weak-areas` | Active group member | `requireMembership` | Covered | Current user's weak area snapshot | Yes | No | Reviewer must not see other reviewers' weak areas. |
+| `/analytics` | Active group member | `requireMembership` | Covered | Current user's subject/topic analytics and external drill summary | Yes | No | Reviewer-scoped analytics only. |
+| `/external-drills` | Active group member | `requireMembership`; actions require membership | Covered | Current user's external drill scores and notes | Yes | No | No upload/OCR/file storage. |
+| `/external-drills/new` | Active group member | `requireMembership`; create action requires membership | Covered | External drill entry form | Yes | No | Server derives user/group/exam from context. |
+| `/external-drills/[logId]` | Active group member | `requireMembership` | Covered | Current user's selected drill details and notes | Yes | No | Query filters by `id`, `user_id`, group, and exam. |
+| `/external-drills/[logId]/edit` | Active group member | `requireMembership`; update/delete actions require membership | Covered | Current user's drill edit form | Yes | No | Query filters by `id`, `user_id`, group, and exam. |
+| `/mock-exams` | Active group member | `requireMembership`; actions require membership | Covered | Published mocks and current user's attempts | Yes | No | Sprint 10 adds middleware prefix coverage. |
+| `/mock-exams/[attemptId]/take` | Active group member | `requireMembership`; submit action requires membership | Covered | Current user's in-progress attempt and published questions | Yes | No | Attempt query includes current user and active context. |
+| `/mock-exams/[attemptId]/results` | Active group member | `requireMembership` | Covered | Current user's submitted attempt results | Yes | No | Attempt query includes current user and active context. |
+| `/mock-exams/[attemptId]/review` | Active group member | `requireMembership` | Covered | Current user's answer review and rationales | Yes | No | Attempt query includes current user and active context. |
 | `/readiness` | Active group member | `requireMembership` | Covered | Current user's readiness score, components, subject breakdown, recommendations | Yes | No | Disclaimer states estimate does not guarantee board exam results. |
 | `/group-progress` | Active group member | `requireMembership` | Covered | Aggregate group progress, active goals, published announcements | Yes | No | Does not show individual readiness, weak areas, notes, or low-performer rankings. |
 | `/submit-question` | Active group reviewer | `requireMembership`; action requires membership | Gap before Sprint 10 fix | Reviewer question submission form and own submitted questions | Yes | No | Hidden from admin nav, but server guard allows active members. |
@@ -68,9 +68,8 @@ However, `src/proxy.ts` currently invokes proxy only for `/dashboard`, `/admin`,
 | `/admin/group-goals` | Active group admin or super_admin | `requireAdminContext`; actions require admin | Covered | Group goals and aggregate progress | No | Yes | Implemented in Sprint 9. |
 | `/admin/announcements` | Active group admin or super_admin | `requireAdminContext`; actions require admin | Covered | Group announcements, including drafts and admin-only announcements | No | Yes | Implemented in Sprint 9. |
 
-## Route Protection TODOs
+## Route Protection Notes
 
-- Align `src/proxy.ts` matcher with every protected route family listed in `src/lib/supabase/proxy.ts`.
-- Add `/mock-exams` to `protectedPrefixes` and `src/proxy.ts` matcher.
 - Keep server-side guards in place after middleware alignment.
 - Continue relying on Supabase RLS for row-level isolation.
+- Re-check this inventory whenever a new route family is added.

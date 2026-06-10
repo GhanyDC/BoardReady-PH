@@ -11,6 +11,7 @@ const protectedPrefixes = [
   "/external-drills",
   "/group-progress",
   "/missed-questions",
+  "/mock-exams",
   "/onboarding",
   "/practice",
   "/readiness",
