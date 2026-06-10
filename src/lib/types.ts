@@ -985,6 +985,26 @@ export type Database = {
         };
         Returns: boolean;
       };
+      get_group_progress_summary: {
+        Args: {
+          target_group_id: string;
+          target_exam_program_id: string;
+          target_week_start: string;
+          target_week_end: string;
+        };
+        Returns: {
+          reviewer_count: number;
+          active_reviewer_count: number;
+          total_study_minutes: number;
+          total_questions_answered: number;
+          average_practice_accuracy: number | null;
+          mock_exams_completed: number;
+          external_drills_logged: number;
+          active_days_count: number;
+          top_weak_subjects: Json;
+          top_weak_topics: Json;
+        }[];
+      };
       can_read_group_goal: {
         Args: {
           target_group_goal_id: string;

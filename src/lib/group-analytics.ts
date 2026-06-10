@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/lib/types";
+import type { Database, Json } from "@/lib/types";
 
 type GroupAnalyticsClient = SupabaseClient<Database>;
 
@@ -48,18 +48,16 @@ export type AdminGroupAnalytics = {
 };
 
 export type PublicGroupProgress = {
+  reviewerCount: number;
+  activeReviewersThisWeek: number;
   totalStudyMinutesThisWeek: number;
   totalQuestionsAnsweredThisWeek: number;
+  averagePracticeAccuracy: number | null;
   mockExamsCompletedThisWeek: number;
   externalDrillsLoggedThisWeek: number;
   activeDaysThisWeek: number;
   topWeakSubjects: GroupWeakSignal[];
   topWeakTopics: GroupWeakSignal[];
-  positiveLeaders: {
-    mostStudySessions: string | null;
-    mostQuestionsAnswered: string | null;
-    mostMockExamsCompleted: string | null;
-  };
   weekStart: string;
   weekEnd: string;
 };
@@ -103,6 +101,11 @@ type WeakAreaRow = {
   accuracy: number;
   priority: string;
 };
+
+type GroupProgressSummaryRow =
+  Database["public"]["Functions"]["get_group_progress_summary"]["Returns"][number];
+
+type JsonObject = { [key: string]: Json | undefined };
 
 function startOfLocalDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -178,6 +181,95 @@ function activeDayCount(rows: Array<{ started_at?: string; created_at?: string; 
   }
 
   return days.size;
+}
+
+function isJsonObject(value: Json): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function jsonString(value: Json | undefined) {
+  return typeof value === "string" ? value : null;
+}
+
+function jsonNumber(value: Json | undefined) {
+  return typeof value === "number" && !Number.isNaN(value) ? value : null;
+}
+
+function parseWeakSignals(value: Json): GroupWeakSignal[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!isJsonObject(item)) {
+      return [];
+    }
+
+    const id = jsonString(item.id);
+    const name = jsonString(item.name);
+    const count = jsonNumber(item.count);
+
+    if (!id || !name || count === null) {
+      return [];
+    }
+
+    return [
+      {
+        id,
+        name,
+        count,
+        averageAccuracy: jsonNumber(item.averageAccuracy),
+      },
+    ];
+  });
+}
+
+function emptyPublicGroupProgress(
+  weekStart: Date,
+  weekEnd: Date,
+): PublicGroupProgress {
+  return {
+    reviewerCount: 0,
+    activeReviewersThisWeek: 0,
+    totalStudyMinutesThisWeek: 0,
+    totalQuestionsAnsweredThisWeek: 0,
+    averagePracticeAccuracy: null,
+    mockExamsCompletedThisWeek: 0,
+    externalDrillsLoggedThisWeek: 0,
+    activeDaysThisWeek: 0,
+    topWeakSubjects: [],
+    topWeakTopics: [],
+    weekStart: weekStart.toISOString(),
+    weekEnd: weekEnd.toISOString(),
+  };
+}
+
+function publicProgressFromSummary(
+  row: GroupProgressSummaryRow | null,
+  weekStart: Date,
+  weekEnd: Date,
+): PublicGroupProgress {
+  if (!row) {
+    return emptyPublicGroupProgress(weekStart, weekEnd);
+  }
+
+  return {
+    reviewerCount: row.reviewer_count,
+    activeReviewersThisWeek: row.active_reviewer_count,
+    totalStudyMinutesThisWeek: row.total_study_minutes,
+    totalQuestionsAnsweredThisWeek: row.total_questions_answered,
+    averagePracticeAccuracy:
+      row.average_practice_accuracy === null
+        ? null
+        : Number(row.average_practice_accuracy),
+    mockExamsCompletedThisWeek: row.mock_exams_completed,
+    externalDrillsLoggedThisWeek: row.external_drills_logged,
+    activeDaysThisWeek: row.active_days_count,
+    topWeakSubjects: parseWeakSignals(row.top_weak_subjects),
+    topWeakTopics: parseWeakSignals(row.top_weak_topics),
+    weekStart: weekStart.toISOString(),
+    weekEnd: weekEnd.toISOString(),
+  };
 }
 
 function summarizeWeakSignals(
@@ -479,21 +571,39 @@ export function getPublicGroupProgressFromAdminAnalytics(
   analytics: AdminGroupAnalytics,
 ): PublicGroupProgress {
   return {
+    reviewerCount: analytics.reviewerCount,
+    activeReviewersThisWeek: analytics.activeReviewersThisWeek,
     totalStudyMinutesThisWeek: analytics.totalStudyMinutesThisWeek,
     totalQuestionsAnsweredThisWeek: analytics.totalQuestionsAnsweredThisWeek,
+    averagePracticeAccuracy: analytics.averagePracticeAccuracy,
     mockExamsCompletedThisWeek: analytics.mockExamsCompletedThisWeek,
     externalDrillsLoggedThisWeek: analytics.externalDrillsLoggedThisWeek,
     activeDaysThisWeek: 0,
     topWeakSubjects: analytics.topWeakSubjects,
     topWeakTopics: analytics.topWeakTopics,
-    positiveLeaders: {
-      mostStudySessions: null,
-      mostQuestionsAnswered: null,
-      mostMockExamsCompleted: null,
-    },
     weekStart: analytics.weekStart,
     weekEnd: analytics.weekEnd,
   };
+}
+
+export async function getReviewerSafeGroupProgress(
+  supabase: GroupAnalyticsClient,
+  context: GroupAnalyticsContext,
+): Promise<PublicGroupProgress> {
+  const weekStart = startOfLocalWeek(new Date());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const { data } = await supabase
+    .rpc("get_group_progress_summary", {
+      target_group_id: context.groupId,
+      target_exam_program_id: context.examProgramId,
+      target_week_start: weekStart.toISOString(),
+      target_week_end: weekEnd.toISOString(),
+    })
+    .maybeSingle();
+
+  return publicProgressFromSummary(data, weekStart, weekEnd);
 }
 
 export function getPublicGroupProgress(
@@ -518,8 +628,17 @@ export function getPublicGroupProgress(
   );
 
   return {
+    reviewerCount: 0,
+    activeReviewersThisWeek: 0,
     totalStudyMinutesThisWeek,
     totalQuestionsAnsweredThisWeek: weekData.questionAttempts.length,
+    averagePracticeAccuracy:
+      weekData.questionAttempts.length > 0
+        ? (weekData.questionAttempts.filter((attempt) => attempt.is_correct)
+            .length /
+            weekData.questionAttempts.length) *
+          100
+        : null,
     mockExamsCompletedThisWeek: weekData.mockAttempts.length,
     externalDrillsLoggedThisWeek: weekData.externalDrills.length,
     activeDaysThisWeek: activeDayCount([
@@ -530,11 +649,6 @@ export function getPublicGroupProgress(
     ]),
     topWeakSubjects: weakSignals.topWeakSubjects,
     topWeakTopics: weakSignals.topWeakTopics,
-    positiveLeaders: {
-      mostStudySessions: null,
-      mostQuestionsAnswered: null,
-      mostMockExamsCompleted: null,
-    },
     weekStart,
     weekEnd,
   };
