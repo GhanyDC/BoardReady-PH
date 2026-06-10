@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Layers3,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   MessageSquarePlus,
   NotebookTabs,
@@ -45,6 +46,12 @@ export function AppShell({
       href: "/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
+      show: true,
+    },
+    {
+      href: "/readiness",
+      label: "Readiness",
+      icon: ListChecks,
       show: true,
     },
     {
