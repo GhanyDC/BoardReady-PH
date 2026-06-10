@@ -606,6 +606,28 @@ export async function getReviewerSafeGroupProgress(
   return publicProgressFromSummary(data, weekStart, weekEnd);
 }
 
+export async function getReviewerSafeGroupProgressForRange(
+  supabase: GroupAnalyticsClient,
+  context: GroupAnalyticsContext,
+  startDate: string,
+  endDate: string,
+): Promise<PublicGroupProgress> {
+  const rangeStart = new Date(`${startDate}T00:00:00`);
+  const rangeEnd = new Date(`${endDate}T00:00:00`);
+  rangeEnd.setDate(rangeEnd.getDate() + 1);
+
+  const { data } = await supabase
+    .rpc("get_group_progress_summary", {
+      target_group_id: context.groupId,
+      target_exam_program_id: context.examProgramId,
+      target_week_start: rangeStart.toISOString(),
+      target_week_end: rangeEnd.toISOString(),
+    })
+    .maybeSingle();
+
+  return publicProgressFromSummary(data, rangeStart, rangeEnd);
+}
+
 export function getPublicGroupProgress(
   weekData: {
     studySessions: StudySessionRow[];

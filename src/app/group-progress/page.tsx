@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,9 +24,18 @@ import {
 import { formatPercent } from "@/lib/analytics";
 import { requireMembership } from "@/lib/current-user";
 import {
+  getReviewerSafeGroupProgressForRange,
   getReviewerSafeGroupProgress,
   type GroupWeakSignal,
 } from "@/lib/group-analytics";
+import {
+  formatGoalDate,
+  formatGroupGoalValue,
+  groupGoalMetricValue,
+  groupGoalProgressPercent,
+  groupGoalTypeLabel,
+  type GroupGoal,
+} from "@/lib/group-goals";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +107,48 @@ function WeakSignalList({
   );
 }
 
+function GoalProgress({
+  goal,
+  value,
+}: {
+  goal: GroupGoal;
+  value: number | null;
+}) {
+  const percent = groupGoalProgressPercent(goal, value);
+
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="font-medium">{goal.title}</span>
+        <Badge variant="secondary">{groupGoalTypeLabel(goal.goal_type)}</Badge>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+        <span>
+          {formatGoalDate(goal.start_date)} - {formatGoalDate(goal.end_date)}
+        </span>
+        <span>
+          {formatGroupGoalValue(goal.goal_type, value)} /{" "}
+          {formatGroupGoalValue(goal.goal_type, goal.target_value)}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-muted" aria-hidden="true">
+        <div
+          className="h-full rounded-full bg-primary"
+          style={{ width: `${percent ?? 0}%` }}
+        />
+      </div>
+      {goal.description ? (
+        <p className="text-sm text-muted-foreground">{goal.description}</p>
+      ) : null}
+      {percent === null ? (
+        <p className="text-sm text-muted-foreground">
+          This custom checkpoint is tracked manually by the admin.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export default async function GroupProgressPage() {
   const context = await requireMembership();
 
@@ -105,10 +157,38 @@ export default async function GroupProgressPage() {
   }
 
   const supabase = await createClient();
-  const progress = await getReviewerSafeGroupProgress(supabase, {
+  const groupContext = {
     groupId: context.activeGroup.id,
     examProgramId: context.activeExamProgram.id,
-  });
+  };
+  const [progress, { data: activeGoals }] = await Promise.all([
+    getReviewerSafeGroupProgress(supabase, groupContext),
+    supabase
+      .from("group_goals")
+      .select("*")
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "active")
+      .order("end_date", { ascending: true })
+      .limit(6),
+  ]);
+  const goalRows = activeGoals ?? [];
+  const goalProgressEntries = await Promise.all(
+    goalRows.map(async (goal) => {
+      const goalProgress = await getReviewerSafeGroupProgressForRange(
+        supabase,
+        groupContext,
+        goal.start_date,
+        goal.end_date,
+      );
+
+      return [
+        goal.id,
+        groupGoalMetricValue(goal.goal_type, goalProgress),
+      ] as const;
+    }),
+  );
+  const progressByGoalId = new Map(goalProgressEntries);
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH reviewer";
   const summaryCards = [
@@ -233,6 +313,31 @@ export default async function GroupProgressPage() {
             </CardContent>
           </Card>
         </section>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Active group goals</CardTitle>
+            <CardDescription>
+              Shared targets set by admins for aggregate group activity.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {goalRows.length === 0 ? (
+              <p className="rounded-md border px-3 py-3 text-sm text-muted-foreground">
+                No active group goals have been published yet.
+              </p>
+            ) : (
+              goalRows.map((goal) => (
+                <div key={goal.id} className="rounded-md border px-3 py-3">
+                  <GoalProgress
+                    goal={goal}
+                    value={progressByGoalId.get(goal.id) ?? null}
+                  />
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4">
