@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -40,6 +41,11 @@ import {
   formatPercentage,
   mockAttemptStatusLabel,
 } from "@/lib/mock-exams";
+import {
+  calculateReadinessAssessment,
+  readinessDisclaimer,
+} from "@/lib/readiness";
+import { getStudyRecommendations } from "@/lib/readiness-recommendations";
 import {
   activityLabel,
   formatDuration,
@@ -94,6 +100,18 @@ function formatAccuracy(correct: number, total: number) {
   }
 
   return `${Math.round((correct / total) * 100)}%`;
+}
+
+function readinessBadgeVariant(label: string) {
+  if (label === "strong" || label === "board_ready") {
+    return "success" as const;
+  }
+
+  if (label === "high_risk") {
+    return "outline" as const;
+  }
+
+  return "secondary" as const;
 }
 
 export default async function DashboardPage() {
@@ -151,6 +169,7 @@ export default async function DashboardPage() {
     performanceResult,
     weakAreasResult,
     externalDrillSummary,
+    readinessAssessment,
     { data: latestMockAttempt },
     { data: latestPublishedMockExam },
   ] = await Promise.all([
@@ -215,6 +234,7 @@ export default async function DashboardPage() {
     getPerformanceAnalytics(supabase, analyticsContext),
     getWeakAreas(supabase, analyticsContext),
     getExternalDrillSummary(supabase, analyticsContext),
+    calculateReadinessAssessment(supabase, analyticsContext),
     supabase
       .from("mock_exam_attempts")
       .select(
@@ -280,6 +300,14 @@ export default async function DashboardPage() {
     (analyticsSummary.totalAttempts > 0 &&
       weakAreasResult.data.length === 0 &&
       analyticsSummary.insufficientTopics.length > 0);
+  const readinessRecommendations = getStudyRecommendations(readinessAssessment);
+  const topReadinessRecommendation = readinessRecommendations[0] ?? null;
+  const topWeakSubject = [...readinessAssessment.subjectBreakdown]
+    .filter((subject) => subject.readinessEstimate !== null)
+    .sort(
+      (left, right) =>
+        (left.readinessEstimate ?? 0) - (right.readinessEstimate ?? 0),
+    )[0] ?? null;
   const { data: latestAttemptMockExam } = latestMockAttempt
     ? await supabase
         .from("mock_exams")
@@ -414,6 +442,65 @@ export default async function DashboardPage() {
             );
           })}
         </section>
+
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle>Readiness Summary</CardTitle>
+              <CardDescription>
+                Internal study estimate across practice, mocks, weak areas,
+                study consistency, and external drills.
+              </CardDescription>
+            </div>
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+              <ListChecks aria-hidden="true" />
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="rounded-md border px-3 py-3">
+                <p className="text-3xl font-semibold">
+                  {readinessAssessment.overallReadiness.toFixed(1)}%
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Readiness score
+                </p>
+              </div>
+              <div className="rounded-md border px-3 py-3">
+                <Badge variant={readinessBadgeVariant(readinessAssessment.label)}>
+                  {readinessAssessment.labelText}
+                </Badge>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Study estimate label
+                </p>
+              </div>
+              <div className="rounded-md border px-3 py-3">
+                <p className="text-base font-semibold">
+                  {topWeakSubject?.subjectName ?? "Not enough data"}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Top weak subject
+                </p>
+              </div>
+              <div className="rounded-md border px-3 py-3">
+                <p className="text-base font-semibold">
+                  {topReadinessRecommendation?.title ?? "Maintain review"}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Top recommendation
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
+              {readinessDisclaimer}
+            </div>
+
+            <Button asChild className="w-fit">
+              <Link href="/readiness">Open readiness overview</Link>
+            </Button>
+          </CardContent>
+        </Card>
 
         <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           <Card>
