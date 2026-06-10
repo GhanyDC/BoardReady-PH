@@ -16,27 +16,17 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type NewExternalDrillPageProps = {
-  searchParams?: Promise<{
-    created?: string;
-  }>;
-};
-
 function todayDateInput() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default async function NewExternalDrillPage({
-  searchParams,
-}: NewExternalDrillPageProps) {
+export default async function NewExternalDrillPage() {
   const context = await requireMembership();
 
   if (!context.activeGroup || !context.activeExamProgram || !context.role) {
     redirect("/onboarding");
   }
 
-  const params = await searchParams;
-  const created = params?.created === "1";
   const supabase = await createClient();
   const [{ data: subjects }, { data: topics }] = await Promise.all([
     supabase
@@ -76,12 +66,6 @@ export default async function NewExternalDrillPage({
             drill material itself.
           </p>
         </section>
-
-        {created ? (
-          <p className="rounded-md border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            External drill log saved.
-          </p>
-        ) : null}
 
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4">
