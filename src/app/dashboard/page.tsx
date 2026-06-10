@@ -3,6 +3,7 @@ import {
   BarChart3,
   CalendarDays,
   CheckCircle2,
+  ClipboardCheck,
   Clock3,
   ClipboardList,
   ListChecks,
@@ -35,6 +36,10 @@ import {
   formatExternalDrillPercentage,
   getExternalDrillSummary,
 } from "@/lib/external-drills";
+import {
+  formatPercentage,
+  mockAttemptStatusLabel,
+} from "@/lib/mock-exams";
 import {
   activityLabel,
   formatDuration,
@@ -146,6 +151,8 @@ export default async function DashboardPage() {
     performanceResult,
     weakAreasResult,
     externalDrillSummary,
+    { data: latestMockAttempt },
+    { data: latestPublishedMockExam },
   ] = await Promise.all([
     supabase
       .from("subjects")
@@ -208,6 +215,26 @@ export default async function DashboardPage() {
     getPerformanceAnalytics(supabase, analyticsContext),
     getWeakAreas(supabase, analyticsContext),
     getExternalDrillSummary(supabase, analyticsContext),
+    supabase
+      .from("mock_exam_attempts")
+      .select(
+        "id, mock_exam_id, status, score, total_items, percentage, submitted_at, created_at",
+      )
+      .eq("user_id", context.user.id)
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("mock_exams")
+      .select("id, title, item_count, time_limit_minutes, published_at")
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const subjectNameById = new Map(
@@ -253,6 +280,27 @@ export default async function DashboardPage() {
     (analyticsSummary.totalAttempts > 0 &&
       weakAreasResult.data.length === 0 &&
       analyticsSummary.insufficientTopics.length > 0);
+  const { data: latestAttemptMockExam } = latestMockAttempt
+    ? await supabase
+        .from("mock_exams")
+        .select("id, title, item_count, time_limit_minutes")
+        .eq("id", latestMockAttempt.mock_exam_id)
+        .maybeSingle()
+    : { data: null };
+  const mockExamTitle =
+    latestAttemptMockExam?.title ?? latestPublishedMockExam?.title ?? null;
+  const mockExamHref =
+    latestMockAttempt?.status === "in_progress"
+      ? `/mock-exams/${latestMockAttempt.id}/take`
+      : latestMockAttempt?.status === "submitted"
+        ? `/mock-exams/${latestMockAttempt.id}/results`
+        : "/mock-exams";
+  const mockExamAction =
+    latestMockAttempt?.status === "in_progress"
+      ? "Resume mock exam"
+      : latestMockAttempt?.status === "submitted"
+        ? "View results"
+        : "Take mock exam";
 
   const metricCards = [
     {
@@ -547,6 +595,90 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </section>
+
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle>Mock Exam</CardTitle>
+              <CardDescription>
+                Timed exam attempts tracked separately from practice drills.
+              </CardDescription>
+            </div>
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+              <ClipboardCheck aria-hidden="true" />
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {latestMockAttempt ? (
+              <>
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {mockExamTitle ?? "Mock exam"}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Latest attempt
+                    </p>
+                  </div>
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {mockAttemptStatusLabel(latestMockAttempt.status)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">Status</p>
+                  </div>
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {latestMockAttempt.score === null
+                        ? "Not scored"
+                        : `${latestMockAttempt.score}/${latestMockAttempt.total_items}`}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">Score</p>
+                  </div>
+                  <div className="rounded-md border px-3 py-3">
+                    <p className="text-xl font-semibold">
+                      {formatPercentage(latestMockAttempt.percentage)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Mock percentage
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-md bg-muted px-3 py-3 text-sm">
+                  <p className="font-medium">Latest mock exam</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {mockExamTitle ?? "Mock exam"} /{" "}
+                    {latestMockAttempt.submitted_at
+                      ? `Submitted ${new Intl.DateTimeFormat("en", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(new Date(latestMockAttempt.submitted_at))}`
+                      : `Started ${new Intl.DateTimeFormat("en", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(new Date(latestMockAttempt.created_at))}`}
+                  </p>
+                </div>
+              </>
+            ) : latestPublishedMockExam ? (
+              <div className="rounded-md border px-3 py-3 text-sm">
+                <p className="font-medium">{latestPublishedMockExam.title}</p>
+                <p className="mt-1 text-muted-foreground">
+                  {latestPublishedMockExam.item_count} items /{" "}
+                  {latestPublishedMockExam.time_limit_minutes} minutes
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-md border px-3 py-3 text-sm text-muted-foreground">
+                No published mock exams are available yet.
+              </div>
+            )}
+
+            <Button asChild className="w-fit">
+              <Link href={mockExamHref}>{mockExamAction}</Link>
+            </Button>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4">
