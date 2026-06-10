@@ -207,7 +207,10 @@ export default async function PracticeSessionPage({
           <Card>
             <CardHeader>
               <CardTitle>Questions could not be loaded</CardTitle>
-              <CardDescription>{error.message}</CardDescription>
+              <CardDescription>
+                Practice questions could not be loaded. Refresh the page or
+                adjust your setup filters.
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}

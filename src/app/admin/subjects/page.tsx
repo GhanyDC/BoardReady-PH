@@ -79,7 +79,9 @@ export default async function AdminSubjectsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Subjects could not be loaded</CardTitle>
-              <CardDescription>{subjectsError.message}</CardDescription>
+              <CardDescription>
+                Try again after refreshing the page.
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}

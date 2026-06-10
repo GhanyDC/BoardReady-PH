@@ -62,7 +62,10 @@ export default async function NewAdminMockExamPage() {
           <Card>
             <CardHeader>
               <CardTitle>Subjects could not be loaded</CardTitle>
-              <CardDescription>{error.message}</CardDescription>
+              <CardDescription>
+                Active subjects could not be loaded. Refresh the page and try
+                again.
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}

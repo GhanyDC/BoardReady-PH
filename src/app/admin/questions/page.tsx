@@ -273,7 +273,9 @@ export default async function AdminQuestionsPage({
           <Card>
             <CardHeader>
               <CardTitle>Questions could not be loaded</CardTitle>
-              <CardDescription>{error.message}</CardDescription>
+              <CardDescription>
+                Try again after refreshing the page.
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}

@@ -120,7 +120,9 @@ export default async function MockExamsPage({ searchParams }: MockExamsPageProps
           <Card>
             <CardHeader>
               <CardTitle>Mock exams could not be loaded</CardTitle>
-              <CardDescription>{error.message}</CardDescription>
+              <CardDescription>
+                Try again after refreshing the page.
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}

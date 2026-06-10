@@ -162,7 +162,9 @@ export default async function AdminAnnouncementsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Announcements could not be loaded</CardTitle>
-              <CardDescription>{error.message}</CardDescription>
+              <CardDescription>
+                Try again after refreshing the page.
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}

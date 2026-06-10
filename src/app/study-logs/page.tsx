@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { BookOpenText } from "lucide-react";
+import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -208,6 +210,11 @@ export default async function StudyLogsPage({
                   Save a study timer session and it will appear here.
                 </CardDescription>
               </CardHeader>
+              <CardContent>
+                <Button asChild>
+                  <Link href="/study-timer">Open study timer</Link>
+                </Button>
+              </CardContent>
             </Card>
           ) : null}
 
