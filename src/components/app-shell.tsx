@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   BarChart3,
+  ClipboardCheck,
   BookOpenCheck,
   BookOpenText,
   ClipboardList,
@@ -50,6 +51,12 @@ export function AppShell({
       href: "/practice",
       label: "Practice",
       icon: Target,
+      show: true,
+    },
+    {
+      href: "/mock-exams",
+      label: "Mock Exams",
+      icon: ClipboardCheck,
       show: true,
     },
     {
@@ -110,6 +117,12 @@ export function AppShell({
       href: "/admin/questions",
       label: "Question Bank",
       icon: NotebookTabs,
+      show: canAccessAdmin(role),
+    },
+    {
+      href: "/admin/mock-exams",
+      label: "Manage Mock Exams",
+      icon: ClipboardCheck,
       show: canAccessAdmin(role),
     },
     {
