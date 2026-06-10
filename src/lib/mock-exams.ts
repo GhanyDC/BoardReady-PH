@@ -11,8 +11,16 @@ export const mockExamStatuses = [
   { value: "archived", label: "Archived" },
 ] as const;
 
+export const mockExamAttemptStatuses = [
+  { value: "in_progress", label: "In progress" },
+  { value: "submitted", label: "Submitted" },
+  { value: "abandoned", label: "Abandoned" },
+] as const;
+
 export type MockExamType = (typeof mockExamTypes)[number]["value"];
 export type MockExamStatus = (typeof mockExamStatuses)[number]["value"];
+export type MockExamAttemptStatus =
+  (typeof mockExamAttemptStatuses)[number]["value"];
 
 export type WeightedSubject = {
   id: string;
@@ -34,6 +42,16 @@ export function mockTypeLabel(value: string) {
 
 export function mockStatusLabel(value: string) {
   return mockExamStatuses.find((item) => item.value === value)?.label ?? value;
+}
+
+export function mockAttemptStatusLabel(value: string | null | undefined) {
+  if (!value) {
+    return "Not started";
+  }
+
+  return (
+    mockExamAttemptStatuses.find((item) => item.value === value)?.label ?? value
+  );
 }
 
 export function mockStatusBadgeVariant(value: string) {
