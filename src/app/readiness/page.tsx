@@ -27,6 +27,7 @@ import {
   readinessDisclaimer,
   saveReadinessSnapshot,
   type ReadinessLabel,
+  type SubjectReadinessPriority,
 } from "@/lib/readiness";
 import { createClient } from "@/lib/supabase/server";
 
@@ -74,6 +75,29 @@ function labelBadgeVariant(label: ReadinessLabel) {
   }
 
   if (label === "high_risk") {
+    return "outline" as const;
+  }
+
+  return "secondary" as const;
+}
+
+function priorityLabel(priority: SubjectReadinessPriority) {
+  const labels: Record<SubjectReadinessPriority, string> = {
+    urgent: "Urgent",
+    high: "High",
+    medium: "Medium",
+    maintenance: "Maintenance",
+  };
+
+  return labels[priority];
+}
+
+function priorityBadgeVariant(priority: SubjectReadinessPriority) {
+  if (priority === "maintenance") {
+    return "success" as const;
+  }
+
+  if (priority === "urgent") {
     return "outline" as const;
   }
 
@@ -235,6 +259,87 @@ export default async function ReadinessPage() {
                 </Button>
               );
             })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Subject readiness breakdown</CardTitle>
+            <CardDescription>
+              Subject estimates use database weights and stay scoped to your
+              active group and exam program.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-hidden rounded-md border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-left">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Subject</th>
+                    <th className="px-3 py-2 font-medium">Weight</th>
+                    <th className="px-3 py-2 font-medium">Practice</th>
+                    <th className="px-3 py-2 font-medium">Mock</th>
+                    <th className="px-3 py-2 font-medium">Weak topics</th>
+                    <th className="px-3 py-2 font-medium">External</th>
+                    <th className="px-3 py-2 font-medium">Estimate</th>
+                    <th className="px-3 py-2 font-medium">Priority</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assessment.subjectBreakdown.map((subject) => (
+                    <tr key={subject.subjectId} className="border-t align-top">
+                      <td className="px-3 py-2">
+                        <p className="font-medium">{subject.subjectName}</p>
+                        {subject.insufficientData ? (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Insufficient data
+                          </p>
+                        ) : null}
+                        {subject.notes.length > 0 ? (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {subject.notes[0]}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2">{subject.subjectWeight}%</td>
+                      <td className="px-3 py-2">
+                        <p>{scoreText(subject.practiceAccuracy)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {subject.practiceAttemptCount} attempts
+                        </p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <p>{scoreText(subject.mockExamAccuracy)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {subject.mockExamItemCount} items
+                        </p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <p>{subject.weakTopicCount}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {subject.criticalWeakTopicCount} critical /{" "}
+                          {subject.highWeakTopicCount} high
+                        </p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <p>{scoreText(subject.externalDrillAverage)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {subject.externalDrillCount} logs
+                        </p>
+                      </td>
+                      <td className="px-3 py-2">
+                        {scoreText(subject.readinessEstimate)}
+                      </td>
+                      <td className="px-3 py-2">
+                        <Badge variant={priorityBadgeVariant(subject.priority)}>
+                          {priorityLabel(subject.priority)}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>
