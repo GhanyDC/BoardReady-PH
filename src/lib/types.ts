@@ -137,6 +137,99 @@ export type Database = {
         };
         Relationships: [];
       };
+      group_goals: {
+        Row: {
+          id: string;
+          group_id: string;
+          exam_program_id: string;
+          title: string;
+          description: string | null;
+          goal_type: string;
+          target_value: number;
+          start_date: string;
+          end_date: string;
+          status: string;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          exam_program_id: string;
+          title: string;
+          description?: string | null;
+          goal_type?: string;
+          target_value: number;
+          start_date?: string;
+          end_date: string;
+          status?: string;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          title?: string;
+          description?: string | null;
+          goal_type?: string;
+          target_value?: number;
+          start_date?: string;
+          end_date?: string;
+          status?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      group_announcements: {
+        Row: {
+          id: string;
+          group_id: string;
+          exam_program_id: string;
+          title: string;
+          body: string;
+          visibility: string;
+          status: string;
+          created_by: string;
+          published_at: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          exam_program_id: string;
+          title: string;
+          body: string;
+          visibility?: string;
+          status?: string;
+          created_by: string;
+          published_at?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          title?: string;
+          body?: string;
+          visibility?: string;
+          status?: string;
+          created_by?: string;
+          published_at?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       questions: {
         Row: {
           id: string;
@@ -889,6 +982,30 @@ export type Database = {
         Args: {
           target_subject_id: string;
           target_group_id: string;
+        };
+        Returns: boolean;
+      };
+      can_read_group_goal: {
+        Args: {
+          target_group_goal_id: string;
+        };
+        Returns: boolean;
+      };
+      can_manage_group_goal: {
+        Args: {
+          target_group_goal_id: string;
+        };
+        Returns: boolean;
+      };
+      can_read_group_announcement: {
+        Args: {
+          target_group_announcement_id: string;
+        };
+        Returns: boolean;
+      };
+      can_manage_group_announcement: {
+        Args: {
+          target_group_announcement_id: string;
         };
         Returns: boolean;
       };
