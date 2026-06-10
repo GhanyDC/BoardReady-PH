@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, BarChart3, CheckCircle2, Circle, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  CheckCircle2,
+  Circle,
+  FileText,
+  XCircle,
+} from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -206,12 +213,20 @@ export default async function MockExamResultsPage({
                 : "recently"}
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/mock-exams">
-              <ArrowLeft aria-hidden="true" />
-              Back to mock exams
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild>
+              <Link href={`/mock-exams/${attempt.id}/review`}>
+                <FileText aria-hidden="true" />
+                Review answers
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/mock-exams">
+                <ArrowLeft aria-hidden="true" />
+                Back to mock exams
+              </Link>
+            </Button>
+          </div>
         </section>
 
         <section className="grid gap-4 md:grid-cols-4">
