@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   ListChecks,
+  Megaphone,
   ShieldCheck,
   Target,
   Timer,
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { formatPercent } from "@/lib/analytics";
 import { requireMembership } from "@/lib/current-user";
+import { groupAnnouncementVisibilityLabel } from "@/lib/group-announcements";
 import {
   getReviewerSafeGroupProgressForRange,
   getReviewerSafeGroupProgress,
@@ -36,6 +38,7 @@ import {
   groupGoalTypeLabel,
   type GroupGoal,
 } from "@/lib/group-goals";
+import { formatDateTime } from "@/lib/questions";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -161,7 +164,8 @@ export default async function GroupProgressPage() {
     groupId: context.activeGroup.id,
     examProgramId: context.activeExamProgram.id,
   };
-  const [progress, { data: activeGoals }] = await Promise.all([
+  const [progress, { data: activeGoals }, { data: announcements }] =
+    await Promise.all([
     getReviewerSafeGroupProgress(supabase, groupContext),
     supabase
       .from("group_goals")
@@ -171,8 +175,17 @@ export default async function GroupProgressPage() {
       .eq("status", "active")
       .order("end_date", { ascending: true })
       .limit(6),
+    supabase
+      .from("group_announcements")
+      .select("id, title, body, visibility, published_at, created_at")
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(5),
   ]);
   const goalRows = activeGoals ?? [];
+  const announcementRows = announcements ?? [];
   const goalProgressEntries = await Promise.all(
     goalRows.map(async (goal) => {
       const goalProgress = await getReviewerSafeGroupProgressForRange(
@@ -333,6 +346,52 @@ export default async function GroupProgressPage() {
                     goal={goal}
                     value={progressByGoalId.get(goal.id) ?? null}
                   />
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle>Group announcements</CardTitle>
+              <CardDescription>
+                Published updates for your active group and exam program.
+              </CardDescription>
+            </div>
+            <Megaphone className="size-5 text-primary" aria-hidden="true" />
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {announcementRows.length === 0 ? (
+              <p className="rounded-md border px-3 py-3 text-sm text-muted-foreground">
+                No announcements are published right now.
+              </p>
+            ) : (
+              announcementRows.map((announcement) => (
+                <div
+                  key={announcement.id}
+                  className="rounded-md border px-3 py-3 text-sm"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-medium">{announcement.title}</p>
+                      <p className="mt-1 text-muted-foreground">
+                        {formatDateTime(
+                          announcement.published_at ??
+                            announcement.created_at,
+                        )}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">
+                      {groupAnnouncementVisibilityLabel(
+                        announcement.visibility,
+                      )}
+                    </Badge>
+                  </div>
+                  <p className="mt-3 whitespace-pre-wrap leading-6 text-muted-foreground">
+                    {announcement.body}
+                  </p>
                 </div>
               ))
             )}
