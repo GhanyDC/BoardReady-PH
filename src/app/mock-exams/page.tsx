@@ -33,7 +33,9 @@ type MockExamsPageProps = {
 function errorMessage(code?: string) {
   const messages: Record<string, string> = {
     "invalid-mock": "Choose a valid mock exam.",
+    "invalid-attempt": "Choose a valid mock exam attempt.",
     "missing-mock": "That mock exam is not available.",
+    "missing-attempt": "That mock exam attempt is not available.",
     "start-failed": "Mock exam could not be started.",
   };
 

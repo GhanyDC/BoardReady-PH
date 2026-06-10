@@ -979,6 +979,14 @@ export type Database = {
         };
         Returns: boolean;
       };
+      submit_mock_exam_attempt: {
+        Args: {
+          target_mock_exam_attempt_id: string;
+          submitted_answers: Json;
+          target_time_spent_seconds: number;
+        };
+        Returns: string;
+      };
       weak_area_priority: {
         Args: {
           target_accuracy: number;
