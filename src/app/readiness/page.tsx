@@ -5,6 +5,7 @@ import {
   BarChart3,
   ClipboardCheck,
   ClipboardList,
+  ListChecks,
   RotateCcw,
   ShieldCheck,
   Target,
@@ -23,6 +24,11 @@ import {
 } from "@/components/ui/card";
 import { requireMembership } from "@/lib/current-user";
 import {
+  getStudyRecommendations,
+  recommendationPriorityLabel,
+  type StudyRecommendationPriority,
+} from "@/lib/readiness-recommendations";
+import {
   calculateReadinessAssessment,
   readinessDisclaimer,
   saveReadinessSnapshot,
@@ -30,6 +36,7 @@ import {
   type SubjectReadinessPriority,
 } from "@/lib/readiness";
 import { createClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +111,18 @@ function priorityBadgeVariant(priority: SubjectReadinessPriority) {
   return "secondary" as const;
 }
 
+function recommendationBadgeVariant(priority: StudyRecommendationPriority) {
+  if (priority === "low") {
+    return "outline" as const;
+  }
+
+  if (priority === "urgent") {
+    return "default" as const;
+  }
+
+  return "secondary" as const;
+}
+
 export default async function ReadinessPage() {
   const context = await requireMembership();
 
@@ -117,9 +136,14 @@ export default async function ReadinessPage() {
     groupId: context.activeGroup.id,
     examProgramId: context.activeExamProgram.id,
   });
+  const recommendations = getStudyRecommendations(assessment);
+  const assessmentWithRecommendations = {
+    ...assessment,
+    recommendationSummary: recommendations as unknown as Json,
+  };
   const { error: snapshotError } = await saveReadinessSnapshot(
     supabase,
-    assessment,
+    assessmentWithRecommendations,
   );
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH reviewer";
@@ -238,6 +262,49 @@ export default async function ReadinessPage() {
             </Card>
           ))}
         </section>
+
+        <Card>
+          <CardHeader>
+            <div className="flex flex-row items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <CardTitle>Rule-based study recommendations</CardTitle>
+                <CardDescription>
+                  Generated from your readiness signals. No AI is used.
+                </CardDescription>
+              </div>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+                <ListChecks aria-hidden="true" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {recommendations.map((recommendation) => (
+              <div
+                key={recommendation.id}
+                className="flex flex-col gap-3 rounded-md border px-3 py-3 sm:flex-row sm:items-start sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">{recommendation.title}</p>
+                    <Badge
+                      variant={recommendationBadgeVariant(
+                        recommendation.priority,
+                      )}
+                    >
+                      {recommendationPriorityLabel(recommendation.priority)}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {recommendation.detail}
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={recommendation.href}>Open</Link>
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
