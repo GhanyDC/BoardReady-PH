@@ -22,6 +22,11 @@ const weaknessStrategyValues: string[] = weaknessStrategies.map(
 );
 const weekDayValues: string[] = weekDays.map((item) => item.value);
 
+function isValidDateInput(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+    && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`));
+}
+
 const studyPreferencesSchema = z.object({
   dailyGoalMinutes: z.coerce
     .number()
@@ -60,7 +65,12 @@ const studyPreferencesSchema = z.object({
       }),
     )
     .default([]),
-  targetExamDate: z.string().nullable(),
+  targetExamDate: z
+    .string()
+    .refine((value) => isValidDateInput(value), {
+      message: "Choose a valid target exam date.",
+    })
+    .nullable(),
 });
 
 export type StudyPreferencesFormState = {
@@ -140,7 +150,7 @@ export async function saveStudyPreferencesAction(
 
   if (error) {
     return {
-      message: error.message,
+      message: "Study habits could not be saved. Check your active group and try again.",
     };
   }
 

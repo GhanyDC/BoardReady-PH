@@ -110,6 +110,26 @@ function validateChoices(choices: ReturnType<typeof parseChoices>) {
 async function assertTopicInSubject(subjectId: string, topicId: string) {
   const context = await requireAdminContext();
   const supabase = await createClient();
+  const { data: subject, error: subjectError } = await supabase
+    .from("subjects")
+    .select("id")
+    .eq("id", subjectId)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (subjectError || !subject) {
+    return {
+      context,
+      supabase,
+      error: {
+        field: "subjectId" as const,
+        message: "Choose a subject from the active exam track.",
+      },
+    };
+  }
+
   const { data: topic, error } = await supabase
     .from("topics")
     .select("id")
@@ -123,7 +143,10 @@ async function assertTopicInSubject(subjectId: string, topicId: string) {
     return {
       context,
       supabase,
-      error: "Choose a topic that belongs to the selected subject.",
+      error: {
+        field: "topicId" as const,
+        message: "Choose a topic that belongs to the selected subject.",
+      },
     };
   }
 
@@ -179,7 +202,7 @@ export async function createAdminQuestionAction(
   if (topicError) {
     return {
       errors: {
-        topicId: [topicError],
+        [topicError.field]: [topicError.message],
       },
     };
   }
@@ -204,7 +227,7 @@ export async function createAdminQuestionAction(
 
   if (questionError || !question) {
     return {
-      message: questionError?.message ?? "Question could not be created.",
+      message: "Question could not be created. Check the form and try again.",
     };
   }
 
@@ -218,7 +241,7 @@ export async function createAdminQuestionAction(
   if (choicesError) {
     await supabase.from("questions").delete().eq("id", question.id);
     return {
-      message: choicesError.message,
+      message: "Question choices could not be saved. Check the choices and try again.",
     };
   }
 
@@ -234,7 +257,7 @@ export async function createAdminQuestionAction(
 
     if (publishError) {
       return {
-        message: publishError.message,
+        message: "Question could not be published. Check the question and try again.",
       };
     }
   }
@@ -293,7 +316,7 @@ export async function updateAdminQuestionAction(
   if (topicError) {
     return {
       errors: {
-        topicId: [topicError],
+        [topicError.field]: [topicError.message],
       },
     };
   }
@@ -308,7 +331,7 @@ export async function updateAdminQuestionAction(
 
   if (loadError || !existingQuestion) {
     return {
-      message: loadError?.message ?? "Question could not be loaded.",
+      message: "Question could not be loaded for this active group.",
     };
   }
 
@@ -336,7 +359,7 @@ export async function updateAdminQuestionAction(
 
   if (choicesError) {
     return {
-      message: choicesError.message,
+      message: "Question choices could not be saved. Check the choices and try again.",
     };
   }
 
@@ -384,7 +407,7 @@ export async function updateAdminQuestionAction(
 
   if (updateError) {
     return {
-      message: updateError.message,
+      message: "Question could not be updated. Check the form and try again.",
     };
   }
 

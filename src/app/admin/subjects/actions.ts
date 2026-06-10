@@ -43,7 +43,7 @@ export async function updateSubjectAction(formData: FormData) {
     .eq("exam_program_id", context.activeExamProgram.id);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Subject could not be updated for this active exam track.");
   }
 
   revalidatePath("/admin/subjects");

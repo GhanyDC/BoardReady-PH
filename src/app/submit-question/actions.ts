@@ -116,6 +116,23 @@ export async function submitReviewerQuestionAction(
   }
 
   const supabase = await createClient();
+  const { data: subject } = await supabase
+    .from("subjects")
+    .select("id")
+    .eq("id", parsed.data.subjectId)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!subject) {
+    return {
+      errors: {
+        subjectId: ["Choose a subject from your active group and exam track."],
+      },
+    };
+  }
+
   const { data: topic } = await supabase
     .from("topics")
     .select("id")
@@ -153,7 +170,7 @@ export async function submitReviewerQuestionAction(
 
   if (questionError || !question) {
     return {
-      message: questionError?.message ?? "Question could not be submitted.",
+      message: "Question could not be submitted. Check the form and try again.",
     };
   }
 
@@ -166,7 +183,7 @@ export async function submitReviewerQuestionAction(
 
   if (choicesError) {
     return {
-      message: choicesError.message,
+      message: "Question choices could not be saved. Check the choices and try again.",
     };
   }
 

@@ -182,7 +182,7 @@ async function buildWeightedItems(
   if (error) {
     return {
       items: [],
-      message: error.message,
+      message: "Published questions could not be loaded for this mock exam.",
     };
   }
 
@@ -241,7 +241,7 @@ async function parseAndPrepareMockExam(
       supabase,
       subjects,
       items: [],
-      error: subjectsError.message,
+      error: "Active subjects could not be loaded for this exam track.",
     };
   }
 
@@ -316,7 +316,7 @@ export async function createMockExamAction(
 
   if (createError || !mockExam) {
     return {
-      message: createError?.message ?? "Mock exam could not be created.",
+      message: "Mock exam could not be created. Check the form and try again.",
     };
   }
 
@@ -334,7 +334,7 @@ export async function createMockExamAction(
     await prepared.supabase.from("mock_exams").delete().eq("id", mockExam.id);
 
     return {
-      message: itemsError.message,
+      message: "Mock exam items could not be saved. Check the question supply.",
     };
   }
 
@@ -379,7 +379,7 @@ export async function updateMockExamAction(
 
   if (loadError || !existingMockExam) {
     return {
-      message: loadError?.message ?? "Mock exam could not be loaded.",
+      message: "Mock exam could not be loaded for this active group.",
     };
   }
 
@@ -402,7 +402,7 @@ export async function updateMockExamAction(
 
   if (updateError) {
     return {
-      message: updateError.message,
+      message: "Mock exam could not be updated. Check the form and try again.",
     };
   }
 
@@ -413,7 +413,7 @@ export async function updateMockExamAction(
 
   if (deleteError) {
     return {
-      message: deleteError.message,
+      message: "Existing mock exam items could not be refreshed.",
     };
   }
 
@@ -429,7 +429,7 @@ export async function updateMockExamAction(
 
   if (itemsError) {
     return {
-      message: itemsError.message,
+      message: "Mock exam items could not be saved. Check the question supply.",
     };
   }
 

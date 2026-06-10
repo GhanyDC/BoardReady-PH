@@ -209,7 +209,8 @@ export async function createExternalDrillLogAction(
 
   if (error) {
     return {
-      message: error.message,
+      message:
+        "External drill log could not be saved. Check the subject, topic, and active group.",
     };
   }
 
@@ -263,7 +264,8 @@ export async function updateExternalDrillLogAction(
 
   if (error) {
     return {
-      message: error.message,
+      message:
+        "External drill log could not be updated. Check the subject, topic, and active group.",
     };
   }
 

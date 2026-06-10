@@ -57,7 +57,7 @@ export async function completeOnboardingAction(
 
   if (error) {
     return {
-      message: error.message,
+      message: "Invite code could not be verified. Check the code and try again.",
     };
   }
 

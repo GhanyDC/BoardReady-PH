@@ -73,7 +73,7 @@ export async function createGroupGoalAction(formData: FormData) {
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Group goal could not be created for this active group.");
   }
 
   revalidateGoalViews();
@@ -99,7 +99,7 @@ export async function updateGroupGoalStatusAction(formData: FormData) {
     .eq("exam_program_id", context.activeExamProgram.id);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Group goal status could not be updated.");
   }
 
   revalidateGoalViews();

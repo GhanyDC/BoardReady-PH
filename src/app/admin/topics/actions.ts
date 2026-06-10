@@ -69,7 +69,7 @@ export async function createTopicAction(formData: FormData) {
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Topic could not be created for this active group.");
   }
 
   revalidatePath("/admin/topics");
@@ -104,7 +104,7 @@ export async function updateTopicAction(formData: FormData) {
     .eq("group_id", context.activeGroup.id);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Topic could not be updated for this active group.");
   }
 
   revalidatePath("/admin/topics");
@@ -130,7 +130,7 @@ export async function setTopicActiveAction(formData: FormData) {
     .eq("group_id", context.activeGroup.id);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Topic status could not be updated for this active group.");
   }
 
   revalidatePath("/admin/topics");

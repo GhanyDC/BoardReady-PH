@@ -8,31 +8,47 @@ import { activityTypes } from "@/lib/study";
 
 const activityTypeValues: string[] = activityTypes.map((item) => item.value);
 
-const studySessionSchema = z.object({
-  sessionToken: z.string().trim().min(1).max(100),
-  activityType: z.string().refine((value) => activityTypeValues.includes(value), {
-    message: "Choose an activity type.",
-  }),
-  subjectId: z.string().uuid().nullable(),
-  topicId: z.string().uuid().nullable(),
-  startedAt: z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
-    message: "Start time is required.",
-  }),
-  endedAt: z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
-    message: "End time is required.",
-  }),
-  durationSeconds: z.coerce
-    .number()
-    .int()
-    .min(1, "Save a session after at least 1 second."),
-  focusRating: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(5)
-    .nullable(),
-  notes: z.string().trim().max(2000, "Keep notes under 2,000 characters."),
-});
+const studySessionSchema = z
+  .object({
+    sessionToken: z.string().trim().min(1).max(100),
+    activityType: z
+      .string()
+      .refine((value) => activityTypeValues.includes(value), {
+        message: "Choose an activity type.",
+      }),
+    subjectId: z.string().uuid().nullable(),
+    topicId: z.string().uuid().nullable(),
+    startedAt: z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
+      message: "Start time is required.",
+    }),
+    endedAt: z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
+      message: "End time is required.",
+    }),
+    durationSeconds: z.coerce
+      .number()
+      .int()
+      .min(1, "Save a session after at least 1 second.")
+      .max(86400, "Study sessions cannot exceed 24 hours."),
+    focusRating: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(5)
+      .nullable(),
+    notes: z.string().trim().max(2000, "Keep notes under 2,000 characters."),
+  })
+  .superRefine((value, context) => {
+    const startedAt = new Date(value.startedAt).getTime();
+    const endedAt = new Date(value.endedAt).getTime();
+
+    if (!Number.isNaN(startedAt) && !Number.isNaN(endedAt) && endedAt < startedAt) {
+      context.addIssue({
+        code: "custom",
+        message: "End time must be after start time.",
+        path: ["endedAt"],
+      });
+    }
+  });
 
 export type StudyTimerFormState = {
   errors?: {
@@ -122,7 +138,8 @@ export async function saveStudySessionAction(
 
   if (error) {
     return {
-      message: error.message,
+      message:
+        "Study session could not be saved. Check the subject, topic, and active group.",
     };
   }
 

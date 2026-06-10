@@ -53,7 +53,7 @@ export async function createGroupAnnouncementAction(formData: FormData) {
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Announcement could not be created for this active group.");
   }
 
   revalidateAnnouncementViews();
@@ -85,7 +85,7 @@ export async function updateGroupAnnouncementSettingsAction(
     .eq("exam_program_id", context.activeExamProgram.id);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Announcement settings could not be updated.");
   }
 
   revalidateAnnouncementViews();

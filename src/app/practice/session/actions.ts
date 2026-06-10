@@ -19,7 +19,7 @@ const attemptSchema = z.object({
         message: "Invalid attempt type.",
       },
     ),
-  timeSpentSeconds: z.coerce.number().int().min(0).nullable(),
+  timeSpentSeconds: z.coerce.number().int().min(0).max(86400).nullable(),
   confidenceRating: z.coerce.number().int().min(1).max(5).nullable(),
 });
 
@@ -82,7 +82,7 @@ export async function savePracticeAttemptAction(
 
   if (error || !attempt) {
     return {
-      message: error?.message ?? "Answer could not be saved.",
+      message: "Answer could not be saved. Check the question and try again.",
     };
   }
 
