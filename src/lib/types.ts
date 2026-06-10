@@ -420,6 +420,162 @@ export type Database = {
         };
         Relationships: [];
       };
+      mock_exams: {
+        Row: {
+          id: string;
+          exam_program_id: string;
+          group_id: string;
+          title: string;
+          description: string | null;
+          mock_type: string;
+          item_count: number;
+          time_limit_minutes: number;
+          status: string;
+          created_by: string;
+          published_at: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          exam_program_id: string;
+          group_id: string;
+          title: string;
+          description?: string | null;
+          mock_type?: string;
+          item_count: number;
+          time_limit_minutes: number;
+          status?: string;
+          created_by: string;
+          published_at?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          exam_program_id?: string;
+          group_id?: string;
+          title?: string;
+          description?: string | null;
+          mock_type?: string;
+          item_count?: number;
+          time_limit_minutes?: number;
+          status?: string;
+          created_by?: string;
+          published_at?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      mock_exam_items: {
+        Row: {
+          id: string;
+          mock_exam_id: string;
+          question_id: string;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          mock_exam_id: string;
+          question_id: string;
+          order_index: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          mock_exam_id?: string;
+          question_id?: string;
+          order_index?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      mock_exam_attempts: {
+        Row: {
+          id: string;
+          mock_exam_id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          started_at: string;
+          submitted_at: string | null;
+          time_spent_seconds: number | null;
+          score: number | null;
+          total_items: number;
+          percentage: number | null;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          mock_exam_id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          started_at?: string;
+          submitted_at?: string | null;
+          time_spent_seconds?: number | null;
+          score?: number | null;
+          total_items?: number;
+          percentage?: number | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          mock_exam_id?: string;
+          user_id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          started_at?: string;
+          submitted_at?: string | null;
+          time_spent_seconds?: number | null;
+          score?: number | null;
+          total_items?: number;
+          percentage?: number | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      mock_exam_answers: {
+        Row: {
+          id: string;
+          mock_exam_attempt_id: string;
+          question_id: string;
+          selected_choice_id: string;
+          is_correct: boolean;
+          time_spent_seconds: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          mock_exam_attempt_id: string;
+          question_id: string;
+          selected_choice_id: string;
+          is_correct?: boolean;
+          time_spent_seconds?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          mock_exam_attempt_id?: string;
+          question_id?: string;
+          selected_choice_id?: string;
+          is_correct?: boolean;
+          time_spent_seconds?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       subjects: {
         Row: {
           id: string;
@@ -769,6 +925,57 @@ export type Database = {
           target_exam_program_id: string;
           target_subject_id: string;
           target_topic_id: string | null;
+        };
+        Returns: boolean;
+      };
+      can_read_mock_exam: {
+        Args: {
+          target_mock_exam_id: string;
+        };
+        Returns: boolean;
+      };
+      can_manage_mock_exam: {
+        Args: {
+          target_mock_exam_id: string;
+        };
+        Returns: boolean;
+      };
+      can_create_mock_exam_item: {
+        Args: {
+          target_mock_exam_id: string;
+          target_question_id: string;
+        };
+        Returns: boolean;
+      };
+      can_start_mock_exam_attempt: {
+        Args: {
+          target_user_id: string;
+          target_mock_exam_id: string;
+          target_group_id: string;
+          target_exam_program_id: string;
+        };
+        Returns: boolean;
+      };
+      can_update_own_mock_exam_attempt: {
+        Args: {
+          target_user_id: string;
+          target_mock_exam_id: string;
+          target_group_id: string;
+          target_exam_program_id: string;
+        };
+        Returns: boolean;
+      };
+      can_read_mock_exam_attempt: {
+        Args: {
+          target_mock_exam_attempt_id: string;
+        };
+        Returns: boolean;
+      };
+      can_create_mock_exam_answer: {
+        Args: {
+          target_mock_exam_attempt_id: string;
+          target_question_id: string;
+          target_selected_choice_id: string;
         };
         Returns: boolean;
       };
