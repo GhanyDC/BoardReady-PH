@@ -12,6 +12,7 @@ const protectedPrefixes = [
   "/missed-questions",
   "/onboarding",
   "/practice",
+  "/readiness",
   "/submit-question",
   "/study-habits",
   "/study-logs",
