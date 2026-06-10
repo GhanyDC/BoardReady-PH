@@ -576,6 +576,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      readiness_snapshots: {
+        Row: {
+          id: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          overall_readiness: number;
+          practice_component: number | null;
+          mock_exam_component: number | null;
+          weak_area_component: number | null;
+          study_consistency_component: number | null;
+          external_drill_component: number | null;
+          subject_breakdown: Json;
+          recommendation_summary: Json;
+          calculated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          group_id: string;
+          exam_program_id: string;
+          overall_readiness: number;
+          practice_component?: number | null;
+          mock_exam_component?: number | null;
+          weak_area_component?: number | null;
+          study_consistency_component?: number | null;
+          external_drill_component?: number | null;
+          subject_breakdown?: Json;
+          recommendation_summary?: Json;
+          calculated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          group_id?: string;
+          exam_program_id?: string;
+          overall_readiness?: number;
+          practice_component?: number | null;
+          mock_exam_component?: number | null;
+          weak_area_component?: number | null;
+          study_consistency_component?: number | null;
+          external_drill_component?: number | null;
+          subject_breakdown?: Json;
+          recommendation_summary?: Json;
+          calculated_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       subjects: {
         Row: {
           id: string;
@@ -984,6 +1035,22 @@ export type Database = {
           target_mock_exam_attempt_id: string;
           submitted_answers: Json;
           target_time_spent_seconds: number;
+        };
+        Returns: string;
+      };
+      save_readiness_snapshot: {
+        Args: {
+          target_user_id: string;
+          target_group_id: string;
+          target_exam_program_id: string;
+          target_overall_readiness: number;
+          target_practice_component: number | null;
+          target_mock_exam_component: number | null;
+          target_weak_area_component: number | null;
+          target_study_consistency_component: number | null;
+          target_external_drill_component: number | null;
+          target_subject_breakdown: Json;
+          target_recommendation_summary: Json;
         };
         Returns: string;
       };
