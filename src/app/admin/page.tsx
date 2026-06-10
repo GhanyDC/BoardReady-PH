@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Megaphone, NotebookTabs, ShieldCheck, SquarePen } from "lucide-react";
+import {
+  BarChart3,
+  Flag,
+  Megaphone,
+  NotebookTabs,
+  ShieldCheck,
+  SquarePen,
+} from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -33,13 +40,25 @@ const adminAreas = [
     title: "Mock exams",
     description: "Published-question exam sets for readiness checks.",
     icon: ShieldCheck,
-    href: null,
+    href: "/admin/mock-exams",
+  },
+  {
+    title: "Group progress",
+    description: "Admin-only reviewer activity and readiness signals.",
+    icon: BarChart3,
+    href: "/admin/group-progress",
+  },
+  {
+    title: "Group goals",
+    description: "Aggregate accountability targets for the group.",
+    icon: Flag,
+    href: "/admin/group-goals",
   },
   {
     title: "Announcements",
     description: "Private updates for the group.",
     icon: Megaphone,
-    href: null,
+    href: "/admin/announcements",
   },
 ];
 
@@ -67,9 +86,8 @@ export default async function AdminPage() {
             Group administration
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Sprint 1 verifies role-gated access for{" "}
-            {activeExamProgram.name} and reserves management areas
-            for the next build phase.
+            Role-gated management for {activeExamProgram.name}, including
+            content, mock exams, group progress, goals, and announcements.
           </p>
         </section>
 

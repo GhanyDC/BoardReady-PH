@@ -6,10 +6,12 @@ import {
   BookOpenCheck,
   BookOpenText,
   ClipboardList,
+  Flag,
   Layers3,
   LayoutDashboard,
   ListChecks,
   LogOut,
+  Megaphone,
   MessageSquarePlus,
   NotebookTabs,
   RotateCcw,
@@ -18,6 +20,7 @@ import {
   SquarePen,
   Target,
   Timer,
+  Users,
 } from "lucide-react";
 
 import { signOutAction } from "@/app/auth/actions";
@@ -52,6 +55,12 @@ export function AppShell({
       href: "/readiness",
       label: "Readiness",
       icon: ListChecks,
+      show: true,
+    },
+    {
+      href: "/group-progress",
+      label: "Group Progress",
+      icon: Users,
       show: true,
     },
     {
@@ -136,6 +145,24 @@ export function AppShell({
       href: "/admin/subjects",
       label: "Subjects/Topics",
       icon: Layers3,
+      show: canAccessAdmin(role),
+    },
+    {
+      href: "/admin/group-progress",
+      label: "Admin Progress",
+      icon: BarChart3,
+      show: canAccessAdmin(role),
+    },
+    {
+      href: "/admin/group-goals",
+      label: "Group Goals",
+      icon: Flag,
+      show: canAccessAdmin(role),
+    },
+    {
+      href: "/admin/announcements",
+      label: "Announcements",
+      icon: Megaphone,
       show: canAccessAdmin(role),
     },
     {
