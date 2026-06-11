@@ -457,7 +457,7 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div className="grid gap-3 md:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-md border px-3 py-3">
                 <p className="text-3xl font-semibold">
                   {readinessAssessment.overallReadiness.toFixed(1)}%
@@ -698,7 +698,7 @@ export default async function DashboardPage() {
           <CardContent className="grid gap-4">
             {latestMockAttempt ? (
               <>
-                <div className="grid gap-3 sm:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-md border px-3 py-3">
                     <p className="text-xl font-semibold">
                       {mockExamTitle ?? "Mock exam"}
@@ -786,7 +786,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <>
-                <div className="grid gap-3 sm:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-md border px-3 py-3">
                     <p className="text-xl font-semibold">
                       {externalDrillSummary.latestDrill
