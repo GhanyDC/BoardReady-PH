@@ -95,7 +95,8 @@ export default async function EditQuestionPage({
             </div>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               Review fields, choices, rationale, and publishing status for the
-              active exam track.
+              active exam track. Status changes only apply when the question
+              meets the publishing requirements.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -112,7 +113,8 @@ export default async function EditQuestionPage({
               <CardTitle>Question workflow</CardTitle>
               <CardDescription>
                 Publishing requires four choices, one correct answer, valid
-                subject/topic, and a rationale.
+                subject/topic, and a rationale. Rejected questions stay closed
+                unless recreated as new content.
               </CardDescription>
             </div>
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">

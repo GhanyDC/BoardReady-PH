@@ -56,7 +56,8 @@ export default async function NewAdminQuestionPage() {
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               Questions are saved to {context.activeGroup.name} and{" "}
-              {context.activeExamProgram.name}.
+              {context.activeExamProgram.name}. Save as Draft to keep working,
+              or Publish now only when every requirement is complete.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -72,8 +73,8 @@ export default async function NewAdminQuestionPage() {
             <div className="space-y-1.5">
               <CardTitle>Question details</CardTitle>
               <CardDescription>
-                Drafts can be incomplete later, but this MVP form requires four
-                choices before saving.
+                This form stores original question content only. Do not paste
+                copyrighted review-center materials or add uploads.
               </CardDescription>
             </div>
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">

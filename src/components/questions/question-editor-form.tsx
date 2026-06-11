@@ -82,6 +82,7 @@ export function QuestionEditorForm({
 }: QuestionEditorFormProps) {
   const [state, formAction, pending] = useActionState(action, {});
   const [subjectId, setSubjectId] = useState(defaults?.subjectId ?? "");
+  const [topicId, setTopicId] = useState(defaults?.topicId ?? "");
   const filteredTopics = useMemo(
     () => topics.filter((topic) => topic.subject_id === subjectId),
     [subjectId, topics],
@@ -95,12 +96,26 @@ export function QuestionEditorForm({
           ["reviewer_submitted", "personal_notes"].includes(item.value),
         )
       : questionSourceTypes;
+  const isAdminMode = submitMode === "admin-create" || submitMode === "admin-edit";
 
   return (
     <form action={formAction} className="grid gap-6">
       {defaults?.id ? (
         <input type="hidden" name="questionId" value={defaults.id} />
       ) : null}
+
+      {isAdminMode ? (
+        <div className="rounded-md border bg-muted/40 px-3 py-3 text-sm">
+          <p className="font-medium">Publishing requirements</p>
+          <div className="mt-2 grid gap-2 text-muted-foreground md:grid-cols-2">
+            <span>Question text, subject, and topic are required.</span>
+            <span>All four choices A-D must be complete.</span>
+            <span>Exactly one correct answer must be selected.</span>
+            <span>Rationale is required before publishing.</span>
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="subjectId">Subject</Label>
@@ -108,7 +123,10 @@ export function QuestionEditorForm({
             id="subjectId"
             name="subjectId"
             value={subjectId}
-            onChange={(event) => setSubjectId(event.target.value)}
+            onChange={(event) => {
+              setSubjectId(event.target.value);
+              setTopicId("");
+            }}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
@@ -131,7 +149,8 @@ export function QuestionEditorForm({
           <select
             id="topicId"
             name="topicId"
-            defaultValue={defaults?.topicId ?? ""}
+            value={topicId}
+            onChange={(event) => setTopicId(event.target.value)}
             disabled={!subjectId || filteredTopics.length === 0}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
             required
@@ -143,6 +162,9 @@ export function QuestionEditorForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Topic options are filtered by the selected subject.
+          </p>
           {state.errors?.topicId ? (
             <p className="text-sm text-destructive">{state.errors.topicId[0]}</p>
           ) : null}
@@ -165,6 +187,9 @@ export function QuestionEditorForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Estimate how demanding the item is for the target exam track.
+          </p>
           {state.errors?.difficulty ? (
             <p className="text-sm text-destructive">
               {state.errors.difficulty[0]}
@@ -187,6 +212,9 @@ export function QuestionEditorForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Choose the cognitive task the item primarily measures.
+          </p>
           {state.errors?.bloomLevel ? (
             <p className="text-sm text-destructive">
               {state.errors.bloomLevel[0]}
@@ -209,6 +237,9 @@ export function QuestionEditorForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Use original or properly allowed source material only.
+          </p>
           {state.errors?.sourceType ? (
             <p className="text-sm text-destructive">
               {state.errors.sourceType[0]}
@@ -233,6 +264,13 @@ export function QuestionEditorForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Publishing runs the database requirements check before reviewers can
+            see the item.
+          </p>
+          {state.errors?.status ? (
+            <p className="text-sm text-destructive">{state.errors.status[0]}</p>
+          ) : null}
         </div>
       ) : null}
 
@@ -243,6 +281,7 @@ export function QuestionEditorForm({
           name="questionText"
           rows={5}
           defaultValue={defaults?.questionText ?? ""}
+          placeholder="Write one clear question stem. Do not paste copyrighted review-center materials."
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           required
         />
@@ -254,12 +293,23 @@ export function QuestionEditorForm({
       </div>
 
       <fieldset className="grid gap-4">
-        <legend className="text-sm font-medium">Choices</legend>
+        <div>
+          <legend className="text-sm font-medium">Choices A-D</legend>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Complete all choices and mark exactly one correct answer.
+          </p>
+        </div>
         <div className="grid gap-4">
           {choices.map((choice) => (
             <div key={choice.label} className="grid gap-3 rounded-md border p-4">
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-sm font-medium">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
+                    {choice.label}
+                  </span>
+                  <p className="text-sm font-medium">Choice {choice.label}</p>
+                </div>
+                <label className="flex w-fit items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium">
                   <input
                     type="radio"
                     name="correctAnswer"
@@ -268,29 +318,31 @@ export function QuestionEditorForm({
                     className="size-4 accent-primary"
                     required
                   />
-                  Correct {choice.label}
+                  Correct answer
                 </label>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor={`choiceText${choice.label}`}>
-                  Choice {choice.label}
+                  Answer text
                 </Label>
                 <Input
                   id={`choiceText${choice.label}`}
                   name={`choiceText${choice.label}`}
                   defaultValue={choice.text}
+                  placeholder={`Choice ${choice.label}`}
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor={`choiceExplanation${choice.label}`}>
-                  Explanation
+                  Choice explanation
                 </Label>
                 <textarea
                   id={`choiceExplanation${choice.label}`}
                   name={`choiceExplanation${choice.label}`}
                   rows={2}
                   defaultValue={choice.explanation}
+                  placeholder="Optional explanation for this choice"
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 />
               </div>
@@ -314,8 +366,12 @@ export function QuestionEditorForm({
           name="rationale"
           rows={4}
           defaultValue={defaults?.rationale ?? ""}
+          placeholder="Explain why the correct answer is defensible and why major distractors are less appropriate."
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
         />
+        <p className="text-xs text-muted-foreground">
+          Required before publishing. Keep it original and focused on learning.
+        </p>
         {state.errors?.rationale ? (
           <p className="text-sm text-destructive">{state.errors.rationale[0]}</p>
         ) : null}
@@ -350,7 +406,7 @@ export function QuestionEditorForm({
             ? "Submit for review"
             : submitMode === "admin-edit"
               ? "Save changes"
-              : "Save draft"}
+              : "Save as Draft"}
         </Button>
         {submitMode === "admin-create" ? (
           <Button type="submit" name="intent" value="publish" disabled={pending}>
@@ -359,7 +415,7 @@ export function QuestionEditorForm({
             ) : (
               <Save aria-hidden="true" />
             )}
-            Publish
+            Publish now
           </Button>
         ) : null}
       </div>
