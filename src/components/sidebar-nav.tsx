@@ -253,7 +253,7 @@ export function SidebarNav({
             }`}
             asChild
           >
-            <Link href={item.href}>
+            <Link href={item.href} prefetch={true}>
               <Icon className="mr-3 h-4 w-4 shrink-0" aria-hidden="true" />
               {item.label}
             </Link>
@@ -283,7 +283,7 @@ export function SidebarNav({
                 }`}
                 asChild
               >
-                <Link href={item.href}>
+                <Link href={item.href} prefetch={true}>
                   <Icon className="mr-3 h-4 w-4 shrink-0" aria-hidden="true" />
                   {item.label}
                 </Link>
