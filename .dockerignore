@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+
+# Version control
+.git
+.gitignore
+
+# Environment files (secrets must be injected at runtime)
+.env
+.env.local
+.env.production
+.env*.local
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docs and non-essential
+docs
+README.md
+AGENTS.md
+CLAUDE.md
+*.md
+
+# Supabase local dev
+supabase/.temp
