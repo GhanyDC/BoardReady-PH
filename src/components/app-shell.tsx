@@ -18,7 +18,7 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex flex-col lg:flex-row min-h-screen w-full bg-background">
       <SidebarNav
         userName={userName}
         role={role}
