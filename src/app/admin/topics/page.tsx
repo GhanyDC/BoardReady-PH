@@ -157,7 +157,7 @@ export default async function AdminTopicsPage() {
                   id="subjectId"
                   name="subjectId"
                   disabled={activeSubjects.length === 0}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   required
                 >
                   <option value="">
@@ -284,7 +284,7 @@ export default async function AdminTopicsPage() {
                             id={`subject-${topic.id}`}
                             name="subjectId"
                             defaultValue={topic.subject_id}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             required
                           >
                             {(subjects ?? []).map((subjectOption) => (

@@ -60,7 +60,7 @@ export function PracticeSetupForm({
             name="subject"
             value={subjectId}
             onChange={(event) => setSubjectId(event.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <option value="">All subjects</option>
             {subjects.map((subject) => (
@@ -78,7 +78,7 @@ export function PracticeSetupForm({
             name="topic"
             defaultValue={defaults.topic}
             disabled={filteredTopics.length === 0}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
           >
             <option value="">All topics</option>
             {filteredTopics.map((topic) => (
@@ -97,7 +97,7 @@ export function PracticeSetupForm({
             id="difficulty"
             name="difficulty"
             defaultValue={defaults.difficulty}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <option value="">All difficulties</option>
             {questionDifficulties.map((difficulty) => (
@@ -127,7 +127,7 @@ export function PracticeSetupForm({
             id="mode"
             name="mode"
             defaultValue={defaults.mode}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {practiceModes.map((mode) => (
               <option key={mode.value} value={mode.value}>

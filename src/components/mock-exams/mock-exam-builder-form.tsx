@@ -110,7 +110,7 @@ export function MockExamBuilderForm({
             name="description"
             rows={3}
             defaultValue={defaults?.description ?? ""}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
           {state.errors?.description ? (
             <p className="text-sm text-destructive">
@@ -126,7 +126,7 @@ export function MockExamBuilderForm({
             name="mockType"
             value={mockType}
             onChange={(event) => setMockType(event.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
             {mockExamTypes.map((mockType) => (
@@ -199,7 +199,7 @@ export function MockExamBuilderForm({
             id="distributionModeDisplay"
             value="weighted_by_subject"
             disabled
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors disabled:opacity-70"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors disabled:opacity-70"
           >
             <option value="weighted_by_subject">Weighted by subject</option>
           </select>

@@ -143,7 +143,7 @@ export function ExternalDrillForm({
             }}
             disabled={noSubjects}
             required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
           >
             <option value="">
               {noSubjects ? "No active subjects" : "Choose subject"}
@@ -169,7 +169,7 @@ export function ExternalDrillForm({
             value={topicId}
             onChange={(event) => setTopicId(event.target.value)}
             disabled={!subjectId || filteredTopics.length === 0}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
           >
             <option value="">No topic</option>
             {filteredTopics.map((topic) => (
@@ -257,7 +257,7 @@ export function ExternalDrillForm({
             maxLength={4000}
             placeholder="Topics or concepts to revisit"
             defaultValue={defaults?.weakTopicNotes ?? ""}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
           {state.errors?.weakTopicNotes ? (
             <p className="text-sm text-destructive">
@@ -275,7 +275,7 @@ export function ExternalDrillForm({
             maxLength={4000}
             placeholder="Score patterns, mistakes, or next steps"
             defaultValue={defaults?.mistakeNotes ?? ""}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
           {state.errors?.mistakeNotes ? (
             <p className="text-sm text-destructive">

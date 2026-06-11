@@ -168,7 +168,7 @@ export default async function StudyLogsPage({
                   id="subject"
                   name="subject"
                   defaultValue={subject}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <option value="">All subjects</option>
                   {(subjects ?? []).map((subjectItem) => (
@@ -184,7 +184,7 @@ export default async function StudyLogsPage({
                   id="activity"
                   name="activity"
                   defaultValue={activity}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <option value="">All activities</option>
                   {activityTypes.map((activityType) => (

@@ -396,7 +396,7 @@ export default async function AdminQuestionsPage({
                   id="subject"
                   name="subject"
                   defaultValue={subject}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <option value="">All subjects</option>
                   {(subjects ?? []).map((subjectItem) => (
@@ -412,7 +412,7 @@ export default async function AdminQuestionsPage({
                   id="topic"
                   name="topic"
                   defaultValue={topic}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <option value="">All topics</option>
                   {filteredTopics.map((topicItem) => (
@@ -428,7 +428,7 @@ export default async function AdminQuestionsPage({
                   id="difficulty"
                   name="difficulty"
                   defaultValue={difficulty}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <option value="">All difficulties</option>
                   {questionDifficulties.map((item) => (
@@ -444,7 +444,7 @@ export default async function AdminQuestionsPage({
                   id="status"
                   name="status"
                   defaultValue={status}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <option value="">All statuses</option>
                   {questionStatuses.map((item) => (
@@ -460,7 +460,7 @@ export default async function AdminQuestionsPage({
                   id="source"
                   name="source"
                   defaultValue={source}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <option value="">All sources</option>
                   {questionSourceTypes.map((item) => (

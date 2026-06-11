@@ -48,7 +48,7 @@ function SelectField({
         id={id}
         name={name}
         defaultValue={defaultValue}
-        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

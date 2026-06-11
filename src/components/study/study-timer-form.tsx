@@ -200,7 +200,7 @@ export function StudyTimerForm({
             name="activityType"
             value={activityType}
             onChange={(event) => setActivityType(event.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
             <option value="">Choose activity</option>
@@ -227,7 +227,7 @@ export function StudyTimerForm({
             name="subjectId"
             value={subjectId}
             onChange={(event) => setSubjectId(event.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <option value="">General session</option>
             {subjects.map((subject) => (
@@ -244,7 +244,7 @@ export function StudyTimerForm({
             id="topicId"
             name="topicId"
             disabled={!subjectId || filteredTopics.length === 0}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
           >
             <option value="">No topic</option>
             {filteredTopics.map((topic) => (
@@ -308,7 +308,7 @@ export function StudyTimerForm({
           <select
             id="focusRating"
             name="focusRating"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <option value="">No rating</option>
             {[1, 2, 3, 4, 5].map((rating) => (
@@ -326,7 +326,7 @@ export function StudyTimerForm({
             name="notes"
             rows={4}
             placeholder="What did you cover? What should you revisit?"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
           {state.errors?.notes ? (
             <p className="text-sm text-destructive">{state.errors.notes[0]}</p>

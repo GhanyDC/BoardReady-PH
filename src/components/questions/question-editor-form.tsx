@@ -127,7 +127,7 @@ export function QuestionEditorForm({
               setSubjectId(event.target.value);
               setTopicId("");
             }}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
             <option value="">Choose subject</option>
@@ -152,7 +152,7 @@ export function QuestionEditorForm({
             value={topicId}
             onChange={(event) => setTopicId(event.target.value)}
             disabled={!subjectId || filteredTopics.length === 0}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
             required
           >
             <option value="">Choose topic</option>
@@ -178,7 +178,7 @@ export function QuestionEditorForm({
             id="difficulty"
             name="difficulty"
             defaultValue={defaults?.difficulty ?? "moderate"}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
             {questionDifficulties.map((difficulty) => (
@@ -203,7 +203,7 @@ export function QuestionEditorForm({
             id="bloomLevel"
             name="bloomLevel"
             defaultValue={defaults?.bloomLevel ?? "understanding"}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
             {bloomLevels.map((level) => (
@@ -228,7 +228,7 @@ export function QuestionEditorForm({
             id="sourceType"
             name="sourceType"
             defaultValue={defaults?.sourceType ?? sourceOptions[0]?.value}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
             {sourceOptions.map((sourceType) => (
@@ -255,7 +255,7 @@ export function QuestionEditorForm({
             id="status"
             name="status"
             defaultValue={defaults?.status ?? "draft"}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           >
             {questionStatuses.map((status) => (
@@ -282,7 +282,7 @@ export function QuestionEditorForm({
           rows={5}
           defaultValue={defaults?.questionText ?? ""}
           placeholder="Write one clear question stem. Do not paste copyrighted review-center materials."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           required
         />
         {state.errors?.questionText ? (
@@ -343,7 +343,7 @@ export function QuestionEditorForm({
                   rows={2}
                   defaultValue={choice.explanation}
                   placeholder="Optional explanation for this choice"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 />
               </div>
             </div>
@@ -367,7 +367,7 @@ export function QuestionEditorForm({
           rows={4}
           defaultValue={defaults?.rationale ?? ""}
           placeholder="Explain why the correct answer is defensible and why major distractors are less appropriate."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
         />
         <p className="text-xs text-muted-foreground">
           Required before publishing. Keep it original and focused on learning.
