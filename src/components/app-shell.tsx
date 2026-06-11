@@ -1,29 +1,6 @@
-import {
-  AlertTriangle,
-  BarChart3,
-  ClipboardCheck,
-  BookOpenText,
-  ClipboardList,
-  Flag,
-  Layers3,
-  LayoutDashboard,
-  ListChecks,
-  Megaphone,
-  MessageSquarePlus,
-  NotebookTabs,
-  RotateCcw,
-  ShieldCheck,
-  SlidersHorizontal,
-  SquarePen,
-  Target,
-  Timer,
-  Users,
-} from "lucide-react";
-
-import { canAccessAdmin } from "@/lib/roles";
 import type { AppRole } from "@/lib/types";
-
 import { SidebarNav } from "@/components/sidebar-nav";
+import { AppFooter } from "@/components/app-footer";
 
 type AppShellProps = {
   userName: string;
@@ -54,10 +31,7 @@ export function AppShell({
           {children}
         </main>
 
-        <footer className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-4 pb-8 pt-4 text-sm text-muted-foreground sm:px-6 lg:px-8">
-          <ClipboardList className="size-4" aria-hidden="true" />
-          Private exam-prep workspace
-        </footer>
+        <AppFooter />
       </div>
     </div>
   );

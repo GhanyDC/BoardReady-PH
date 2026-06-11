@@ -32,6 +32,9 @@ import {
 import { signOutAction } from "@/app/auth/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { PreferencesDialog } from "@/components/preferences-dialog";
+import { usePreferences } from "@/hooks/use-preferences";
 import { canAccessAdmin, formatRole } from "@/lib/roles";
 import type { AppRole } from "@/lib/types";
 
@@ -213,7 +216,6 @@ export function SidebarNav({
 
   // Close the mobile menu whenever the route changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const timer = setTimeout(() => setIsMobileMenuOpen(false), 0);
     return () => clearTimeout(timer);
   }, [pathname]);
@@ -303,19 +305,36 @@ export function SidebarNav({
           {formatRole(role)}
         </Badge>
       </div>
-      <form action={signOutAction}>
-        <Button
-          type="submit"
-          variant="ghost"
-          size="icon"
-          title="Sign out"
-          aria-label="Sign out"
-        >
-          <LogOut className="h-5 w-5" aria-hidden="true" />
-        </Button>
-      </form>
+      <div className="flex items-center gap-1">
+        <PreferencesDialog />
+        <ThemeToggle />
+        <form action={signOutAction}>
+          <Button
+            type="submit"
+            variant="ghost"
+            size="icon"
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-5 w-5" aria-hidden="true" />
+          </Button>
+        </form>
+      </div>
     </div>
   );
+
+  // Prevent hydration mismatch by defaulting to false until mounted
+  const [mounted, setMounted] = useState(false);
+  const isZenMode = usePreferences((state) => state.isZenMode);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  if (mounted && isZenMode) {
+    return null;
+  }
 
   return (
     <>
