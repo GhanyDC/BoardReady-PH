@@ -1,6 +1,17 @@
 import Link from "next/link";
-import { Filter, PlusCircle, Search } from "lucide-react";
+import {
+  Archive,
+  CheckCircle2,
+  Clock3,
+  FileQuestion,
+  Filter,
+  PlusCircle,
+  RotateCcw,
+  Search,
+  XCircle,
+} from "lucide-react";
 
+import { updateAdminQuestionStatusAction } from "@/app/admin/questions/actions";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +49,8 @@ type AdminQuestionsPageProps = {
     status?: string;
     source?: string;
     q?: string;
+    updated?: string;
+    error?: string;
   }>;
 };
 
@@ -47,6 +60,85 @@ function questionPreview(value: string) {
   }
 
   return `${value.slice(0, 150)}...`;
+}
+
+function statusClassName(status: string) {
+  if (status === "published") {
+    return "border-transparent bg-emerald-600 text-white";
+  }
+
+  if (status === "pending_review") {
+    return "border-transparent bg-amber-500 text-black";
+  }
+
+  if (status === "needs_revision") {
+    return "border-transparent bg-orange-600 text-white";
+  }
+
+  if (status === "archived" || status === "rejected") {
+    return "border-transparent bg-muted text-muted-foreground";
+  }
+
+  return "";
+}
+
+function statusErrorMessage(value?: string) {
+  if (!value) {
+    return null;
+  }
+
+  if (value === "status-update-failed") {
+    return "Status could not be updated. For publishing, confirm the question has four choices, one correct answer, and a rationale.";
+  }
+
+  if (value === "invalid-status-transition") {
+    return "That status change is not supported from the current question state.";
+  }
+
+  if (value === "question-not-found") {
+    return "Question was not found in the active group and exam track.";
+  }
+
+  return "Question action could not be completed.";
+}
+
+function statusActionButtons(question: { id: string; status: string }) {
+  const actionsByStatus: Record<
+    string,
+    { status: string; label: string; icon: typeof CheckCircle2 }[]
+  > = {
+    draft: [{ status: "published", label: "Publish", icon: CheckCircle2 }],
+    pending_review: [
+      { status: "published", label: "Publish", icon: CheckCircle2 },
+      { status: "needs_revision", label: "Needs revision", icon: RotateCcw },
+      { status: "rejected", label: "Reject", icon: XCircle },
+    ],
+    needs_revision: [
+      { status: "pending_review", label: "Return to pending", icon: Clock3 },
+    ],
+    published: [{ status: "archived", label: "Archive", icon: Archive }],
+    archived: [{ status: "published", label: "Republish", icon: CheckCircle2 }],
+  };
+  const actions = actionsByStatus[question.status] ?? [];
+
+  if (actions.length === 0) {
+    return null;
+  }
+
+  return actions.map((action) => {
+    const Icon = action.icon;
+
+    return (
+      <form key={action.status} action={updateAdminQuestionStatusAction}>
+        <input type="hidden" name="questionId" value={question.id} />
+        <input type="hidden" name="status" value={action.status} />
+        <Button type="submit" variant="outline" size="sm">
+          <Icon aria-hidden="true" />
+          {action.label}
+        </Button>
+      </form>
+    );
+  });
 }
 
 export default async function AdminQuestionsPage({
@@ -60,8 +152,19 @@ export default async function AdminQuestionsPage({
   const status = params?.status ?? "";
   const source = params?.source ?? "";
   const search = params?.q?.trim() ?? "";
+  const updated = params?.updated === "1";
+  const errorMessage = statusErrorMessage(params?.error);
   const supabase = await createClient();
-  const [{ data: subjects }, { data: topics }] = await Promise.all([
+  const [
+    { data: subjects },
+    { data: topics },
+    { count: draftCount },
+    { count: pendingReviewCount },
+    { count: needsRevisionCount },
+    { count: publishedCount },
+    { count: archivedCount },
+    { count: rejectedCount },
+  ] = await Promise.all([
     supabase
       .from("subjects")
       .select("id, name")
@@ -75,7 +178,81 @@ export default async function AdminQuestionsPage({
       .eq("group_id", context.activeGroup.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "draft"),
+    supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "pending_review"),
+    supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "needs_revision"),
+    supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "published"),
+    supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "archived"),
+    supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("group_id", context.activeGroup.id)
+      .eq("exam_program_id", context.activeExamProgram.id)
+      .eq("status", "rejected"),
   ]);
+  const quickFilters = [
+    {
+      href: "/admin/questions?status=pending_review",
+      label: "Pending Review",
+      count: pendingReviewCount ?? 0,
+      active: status === "pending_review",
+    },
+    {
+      href: "/admin/questions?status=needs_revision",
+      label: "Needs Revision",
+      count: needsRevisionCount ?? 0,
+      active: status === "needs_revision",
+    },
+    {
+      href: "/admin/questions?status=draft",
+      label: "Draft",
+      count: draftCount ?? 0,
+      active: status === "draft",
+    },
+    {
+      href: "/admin/questions?status=published",
+      label: "Published",
+      count: publishedCount ?? 0,
+      active: status === "published",
+    },
+    {
+      href: "/admin/questions?status=archived",
+      label: "Archived",
+      count: archivedCount ?? 0,
+      active: status === "archived",
+    },
+    {
+      href: "/admin/questions?status=rejected",
+      label: "Rejected",
+      count: rejectedCount ?? 0,
+      active: status === "rejected",
+    },
+  ];
 
   let query = supabase
     .from("questions")
@@ -152,12 +329,43 @@ export default async function AdminQuestionsPage({
           </Button>
         </section>
 
+        {updated ? (
+          <p className="rounded-md border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            Question status updated.
+          </p>
+        ) : null}
+
+        {errorMessage ? (
+          <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <section className="flex flex-wrap gap-2">
+          {quickFilters.map((filterItem) => (
+            <Button
+              key={filterItem.href}
+              asChild
+              variant={filterItem.active ? "default" : "outline"}
+              size="sm"
+            >
+              <Link href={filterItem.href}>
+                {filterItem.label}
+                <span className="rounded bg-background/20 px-1.5 py-0.5 text-xs">
+                  {filterItem.count}
+                </span>
+              </Link>
+            </Button>
+          ))}
+        </section>
+
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div className="space-y-1.5">
               <CardTitle>Filters</CardTitle>
               <CardDescription>
-                Showing up to 50 active-context question records.
+                Showing up to 50 active-context question records. Quick filters
+                keep review queues one click away.
               </CardDescription>
             </div>
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
@@ -286,9 +494,24 @@ export default async function AdminQuestionsPage({
               <CardHeader>
                 <CardTitle>No questions found</CardTitle>
                 <CardDescription>
-                  Create a question or adjust filters to expand the list.
+                  Create a question, open a review queue, or adjust filters to
+                  expand the list.
                 </CardDescription>
               </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Button asChild>
+                  <Link href="/admin/questions/new">
+                    <PlusCircle aria-hidden="true" />
+                    New question
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/admin/questions?status=pending_review">
+                    <Clock3 aria-hidden="true" />
+                    Pending review
+                  </Link>
+                </Button>
+              </CardContent>
             </Card>
           ) : null}
 
@@ -305,16 +528,37 @@ export default async function AdminQuestionsPage({
                       {questionPreview(question.question_text)}
                     </h2>
                   </div>
-                  <Badge variant={statusBadgeVariant(question.status)}>
+                  <Badge
+                    variant={statusBadgeVariant(question.status)}
+                    className={statusClassName(question.status)}
+                  >
                     {statusLabel(question.status)}
                   </Badge>
                 </div>
 
-                <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-3 xl:grid-cols-6">
-                  <span>{difficultyLabel(question.difficulty)}</span>
-                  <span>{bloomLevelLabel(question.bloom_level)}</span>
-                  <span>{sourceTypeLabel(question.source_type)}</span>
-                  <span>By {shortUserId(question.created_by)}</span>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline">
+                    {difficultyLabel(question.difficulty)}
+                  </Badge>
+                  <Badge variant="outline">
+                    {bloomLevelLabel(question.bloom_level)}
+                  </Badge>
+                  <Badge
+                    variant={
+                      question.source_type === "reviewer_submitted"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
+                    {sourceTypeLabel(question.source_type)}
+                  </Badge>
+                  {question.source_type === "reviewer_submitted" ? (
+                    <Badge variant="secondary">Reviewer submitted</Badge>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
+                  <span>Created by {shortUserId(question.created_by)}</span>
                   <span>Created {formatDateTime(question.created_at)}</span>
                   <span>Updated {formatDateTime(question.updated_at)}</span>
                 </div>
@@ -322,9 +566,11 @@ export default async function AdminQuestionsPage({
                 <div className="flex flex-wrap gap-2">
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/admin/questions/${question.id}/edit`}>
-                      Edit / review
+                      <FileQuestion aria-hidden="true" />
+                      View / edit
                     </Link>
                   </Button>
+                  {statusActionButtons(question)}
                 </div>
               </CardContent>
             </Card>

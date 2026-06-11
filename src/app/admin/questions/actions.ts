@@ -63,6 +63,12 @@ const adminQuestionUpdateSchema = adminQuestionSchema.extend({
   }),
   intent: z.literal("update"),
 });
+const questionStatusActionSchema = z.object({
+  questionId: z.string().uuid(),
+  status: z.string().refine((value) => statusValues.includes(value), {
+    message: "Choose a valid status.",
+  }),
+});
 
 export type QuestionFormState = {
   errors?: {
@@ -412,4 +418,69 @@ export async function updateAdminQuestionAction(
   }
 
   redirect("/admin/questions");
+}
+
+export async function updateAdminQuestionStatusAction(formData: FormData) {
+  const parsed = questionStatusActionSchema.safeParse({
+    questionId: formData.get("questionId"),
+    status: formData.get("status"),
+  });
+
+  if (!parsed.success) {
+    redirect("/admin/questions?error=invalid-status-action");
+  }
+
+  const context = await requireAdminContext();
+  const supabase = await createClient();
+  const { data: existingQuestion, error: loadError } = await supabase
+    .from("questions")
+    .select("id, status")
+    .eq("id", parsed.data.questionId)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id)
+    .maybeSingle();
+
+  if (loadError || !existingQuestion) {
+    redirect("/admin/questions?error=question-not-found");
+  }
+
+  const allowedTargets = allowedStatusTransitions[existingQuestion.status] ?? [];
+
+  if (!allowedTargets.includes(parsed.data.status)) {
+    redirect("/admin/questions?error=invalid-status-transition");
+  }
+
+  const updatePayload: {
+    status: string;
+    verified_by?: string;
+    published_at?: string;
+    archived_at?: string;
+  } = {
+    status: parsed.data.status,
+  };
+
+  if (
+    parsed.data.status === "published" &&
+    existingQuestion.status !== "published"
+  ) {
+    updatePayload.verified_by = context.user.id;
+    updatePayload.published_at = new Date().toISOString();
+  }
+
+  if (parsed.data.status === "archived" && existingQuestion.status !== "archived") {
+    updatePayload.archived_at = new Date().toISOString();
+  }
+
+  const { error: updateError } = await supabase
+    .from("questions")
+    .update(updatePayload)
+    .eq("id", parsed.data.questionId)
+    .eq("group_id", context.activeGroup.id)
+    .eq("exam_program_id", context.activeExamProgram.id);
+
+  if (updateError) {
+    redirect("/admin/questions?error=status-update-failed");
+  }
+
+  redirect(`/admin/questions?status=${parsed.data.status}&updated=1`);
 }
