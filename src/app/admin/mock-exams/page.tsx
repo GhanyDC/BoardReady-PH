@@ -74,6 +74,18 @@ function errorMessage(code?: string) {
   return code ? messages[code] ?? "Mock exam action could not be completed." : null;
 }
 
+function statusClassName(status: string) {
+  if (status === "published") {
+    return "border-transparent bg-emerald-600 text-white";
+  }
+
+  if (status === "archived") {
+    return "border-transparent bg-muted text-muted-foreground";
+  }
+
+  return "border-amber-200 bg-amber-50 text-amber-900";
+}
+
 export default async function AdminMockExamsPage({
   searchParams,
 }: AdminMockExamsPageProps) {
@@ -105,6 +117,15 @@ export default async function AdminMockExamsPage({
     );
   }
 
+  const draftCount = (mockExams ?? []).filter(
+    (mockExam) => mockExam.status === "draft",
+  ).length;
+  const publishedCount = (mockExams ?? []).filter(
+    (mockExam) => mockExam.status === "published",
+  ).length;
+  const archivedCount = (mockExams ?? []).filter(
+    (mockExam) => mockExam.status === "archived",
+  ).length;
   const message = statusMessage(params);
   const errorText = errorMessage(params?.error);
   const userName =
@@ -162,6 +183,42 @@ export default async function AdminMockExamsPage({
           </Card>
         ) : null}
 
+        <section className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Draft mocks</CardTitle>
+              <CardDescription>Editable and regeneratable</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tracking-normal">
+                {draftCount}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Published mocks</CardTitle>
+              <CardDescription>Visible to reviewers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tracking-normal">
+                {publishedCount}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Archived mocks</CardTitle>
+              <CardDescription>Retired from reviewer use</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tracking-normal">
+                {archivedCount}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
         <section className="grid gap-4">
           {(mockExams ?? []).length === 0 ? (
             <Card>
@@ -193,7 +250,10 @@ export default async function AdminMockExamsPage({
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={mockStatusBadgeVariant(mockExam.status)}>
+                        <Badge
+                          variant={mockStatusBadgeVariant(mockExam.status)}
+                          className={statusClassName(mockExam.status)}
+                        >
                           {mockStatusLabel(mockExam.status)}
                         </Badge>
                         <Badge variant="secondary">

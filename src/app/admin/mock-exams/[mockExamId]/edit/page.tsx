@@ -77,7 +77,25 @@ export default async function EditAdminMockExamPage({
           .select("id, subject_id")
           .in("id", questionIds)
       : { data: [] };
+  const subjectIds = (subjects ?? []).map((subject) => subject.id);
+  const { data: publishedQuestions } =
+    subjectIds.length > 0
+      ? await supabase
+          .from("questions")
+          .select("id, subject_id")
+          .eq("group_id", context.activeGroup.id)
+          .eq("exam_program_id", context.activeExamProgram.id)
+          .eq("status", "published")
+          .not("verified_by", "is", null)
+          .in("subject_id", subjectIds)
+      : { data: [] };
   const itemCountBySubject = new Map<string, number>();
+  const availabilityBySubject = (publishedQuestions ?? []).reduce<
+    Record<string, number>
+  >((counts, question) => {
+    counts[question.subject_id] = (counts[question.subject_id] ?? 0) + 1;
+    return counts;
+  }, {});
 
   for (const question of selectedQuestions ?? []) {
     itemCountBySubject.set(
@@ -143,7 +161,7 @@ export default async function EditAdminMockExamPage({
                 <CardTitle>Draft builder</CardTitle>
                 <CardDescription>
                   Saving regenerates the weighted item set from published
-                  verified questions.
+                  verified questions. Shortages are shown before you save.
                 </CardDescription>
               </div>
               <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
@@ -154,6 +172,7 @@ export default async function EditAdminMockExamPage({
               <MockExamBuilderForm
                 action={updateMockExamAction}
                 subjects={subjects ?? []}
+                availabilityBySubject={availabilityBySubject}
                 submitLabel="Save and regenerate"
                 defaults={{
                   id: mockExam.id,
@@ -232,6 +251,9 @@ export default async function EditAdminMockExamPage({
                     <th className="px-3 py-2 font-medium">Subject</th>
                     <th className="px-3 py-2 font-medium">Weight</th>
                     <th className="px-3 py-2 font-medium">Saved items</th>
+                    <th className="px-3 py-2 font-medium">
+                      Published available
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -241,6 +263,9 @@ export default async function EditAdminMockExamPage({
                       <td className="px-3 py-2">{subject.board_weight}%</td>
                       <td className="px-3 py-2 font-medium">
                         {itemCountBySubject.get(subject.id) ?? 0}
+                      </td>
+                      <td className="px-3 py-2">
+                        {availabilityBySubject[subject.id] ?? 0}
                       </td>
                     </tr>
                   ))}

@@ -27,6 +27,24 @@ export default async function NewAdminMockExamPage() {
     .eq("exam_program_id", context.activeExamProgram.id)
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
+  const subjectIds = (subjects ?? []).map((subject) => subject.id);
+  const { data: publishedQuestions } =
+    subjectIds.length > 0
+      ? await supabase
+          .from("questions")
+          .select("id, subject_id")
+          .eq("group_id", context.activeGroup.id)
+          .eq("exam_program_id", context.activeExamProgram.id)
+          .eq("status", "published")
+          .not("verified_by", "is", null)
+          .in("subject_id", subjectIds)
+      : { data: [] };
+  const availabilityBySubject = (publishedQuestions ?? []).reduce<
+    Record<string, number>
+  >((counts, question) => {
+    counts[question.subject_id] = (counts[question.subject_id] ?? 0) + 1;
+    return counts;
+  }, {});
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH admin";
 
@@ -47,7 +65,8 @@ export default async function NewAdminMockExamPage() {
               New mock exam
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
-              Generate a weighted draft from published verified questions.
+              Generate a weighted draft from published verified questions only.
+              The preview warns when any subject does not have enough supply.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -75,7 +94,9 @@ export default async function NewAdminMockExamPage() {
             <div className="space-y-1.5">
               <CardTitle>Weighted builder</CardTitle>
               <CardDescription>
-                Subject weights come from the active exam program setup.
+                Subject weights come from the active exam program setup. Item
+                generation is blocked until every required subject has enough
+                published verified questions.
               </CardDescription>
             </div>
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
@@ -86,6 +107,7 @@ export default async function NewAdminMockExamPage() {
             <MockExamBuilderForm
               action={createMockExamAction}
               subjects={subjects ?? []}
+              availabilityBySubject={availabilityBySubject}
             />
           </CardContent>
         </Card>
