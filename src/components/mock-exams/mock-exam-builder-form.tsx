@@ -214,8 +214,8 @@ export function MockExamBuilderForm({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-md border">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-md border">
+        <table className="w-full min-w-[600px] text-sm">
           <thead className="bg-muted text-left">
             <tr>
               <th className="px-3 py-2 font-medium">Subject</th>
