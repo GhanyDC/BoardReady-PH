@@ -232,40 +232,46 @@ export function SidebarNav({
     };
   }, [isMobileMenuOpen]);
 
+  const isAdmin = canAccessAdmin(role);
   const reviewerNav = navItems.filter((i) => i.show && i.group === "reviewer");
   const adminNav = navItems.filter((i) => i.show && i.group === "admin");
+  const homeHref = isAdmin ? "/admin" : "/dashboard";
 
   const renderNavLinks = () => (
     <nav className="flex flex-col gap-1 px-3 py-4" aria-label="Primary">
-      <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Reviewer
-      </div>
-      {reviewerNav.map((item) => {
-        const Icon = item.icon;
-        const isActive =
-          pathname === item.href ||
-          (item.href !== "/dashboard" && pathname.startsWith(item.href));
-
-        return (
-          <Button
-            key={item.href}
-            variant={isActive ? "secondary" : "ghost"}
-            className={`justify-start ${
-              isActive ? "font-semibold" : "font-normal"
-            }`}
-            asChild
-          >
-            <Link href={item.href} prefetch={true}>
-              <Icon className="mr-3 h-4 w-4 shrink-0" aria-hidden="true" />
-              {item.label}
-            </Link>
-          </Button>
-        );
-      })}
-
-      {adminNav.length > 0 && (
+      {!isAdmin && (
         <>
-          <div className="mb-2 mt-6 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Reviewer
+          </div>
+          {reviewerNav.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
+            return (
+              <Button
+                key={item.href}
+                variant={isActive ? "secondary" : "ghost"}
+                className={`justify-start ${
+                  isActive ? "font-semibold" : "font-normal"
+                }`}
+                asChild
+              >
+                <Link href={item.href} prefetch={true}>
+                  <Icon className="mr-3 h-4 w-4 shrink-0" aria-hidden="true" />
+                  {item.label}
+                </Link>
+              </Button>
+            );
+          })}
+        </>
+      )}
+
+      {isAdmin && adminNav.length > 0 && (
+        <>
+          <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Admin
           </div>
           {adminNav.map((item) => {
@@ -342,7 +348,7 @@ export function SidebarNav({
       <aside className="hidden w-64 shrink-0 flex-col border-r bg-card lg:flex">
         <div className="flex h-16 shrink-0 items-center gap-3 border-b px-4">
           <Link
-            href="/dashboard"
+            href={homeHref}
             className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary shadow-sm"
             aria-label="BoardReady PH dashboard"
           >
@@ -393,7 +399,7 @@ export function SidebarNav({
             <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
           <Link
-            href="/dashboard"
+            href={homeHref}
             className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary shadow-sm"
             aria-label="BoardReady PH dashboard"
           >

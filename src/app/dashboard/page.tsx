@@ -24,7 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { requireCurrentUser } from "@/lib/current-user";
 import { attemptTypeLabel } from "@/lib/practice";
-import { formatRole } from "@/lib/roles";
+import { formatRole, canAccessAdmin } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import {
   formatPercent,
@@ -114,10 +114,16 @@ function readinessBadgeVariant(label: string) {
   return "secondary" as const;
 }
 
+import { redirect } from "next/navigation";
+
 export default async function DashboardPage() {
   const context = await requireCurrentUser();
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH reviewer";
+
+  if (context.role && canAccessAdmin(context.role)) {
+    redirect("/admin");
+  }
 
   if (!context.activeGroup || !context.activeExamProgram || !context.role) {
     return (
