@@ -23,7 +23,7 @@ import {
 import { canAccessAdmin } from "@/lib/roles";
 import type { AppRole } from "@/lib/types";
 
-import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
+import { SidebarNav } from "@/components/sidebar-nav";
 
 type AppShellProps = {
   userName: string;
@@ -40,160 +40,9 @@ export function AppShell({
   examProgramName,
   children,
 }: AppShellProps) {
-  const navItems: NavItem[] = [
-    {
-      href: "/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/readiness",
-      label: "Readiness",
-      icon: ListChecks,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/group-progress",
-      label: "Group Progress",
-      icon: Users,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/practice",
-      label: "Practice",
-      icon: Target,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/mock-exams",
-      label: "Mock Exams",
-      icon: ClipboardCheck,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/missed-questions",
-      label: "Missed Questions",
-      icon: RotateCcw,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/weak-areas",
-      label: "Weak Areas",
-      icon: AlertTriangle,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/analytics",
-      label: "Analytics",
-      icon: BarChart3,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/external-drills",
-      label: "External Drills",
-      icon: ClipboardList,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/external-drills/new",
-      label: "Log External Drill",
-      icon: SquarePen,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/study-timer",
-      label: "Study Timer",
-      icon: Timer,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/study-logs",
-      label: "Study Logs",
-      icon: BookOpenText,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/study-habits",
-      label: "Study Habits",
-      icon: SlidersHorizontal,
-      show: true,
-      group: "reviewer",
-    },
-    {
-      href: "/submit-question",
-      label: "Submit Question",
-      icon: MessageSquarePlus,
-      show: !canAccessAdmin(role),
-      group: "reviewer",
-    },
-    {
-      href: "/admin/questions",
-      label: "Question Bank",
-      icon: NotebookTabs,
-      show: canAccessAdmin(role),
-      group: "admin",
-    },
-    {
-      href: "/admin/mock-exams",
-      label: "Manage Mock Exams",
-      icon: ClipboardCheck,
-      show: canAccessAdmin(role),
-      group: "admin",
-    },
-    {
-      href: "/admin/subjects",
-      label: "Subjects/Topics",
-      icon: Layers3,
-      show: canAccessAdmin(role),
-      group: "admin",
-    },
-    {
-      href: "/admin/group-progress",
-      label: "Admin Progress",
-      icon: BarChart3,
-      show: canAccessAdmin(role),
-      group: "admin",
-    },
-    {
-      href: "/admin/group-goals",
-      label: "Group Goals",
-      icon: Flag,
-      show: canAccessAdmin(role),
-      group: "admin",
-    },
-    {
-      href: "/admin/announcements",
-      label: "Announcements",
-      icon: Megaphone,
-      show: canAccessAdmin(role),
-      group: "admin",
-    },
-    {
-      href: "/admin",
-      label: "Admin Dashboard",
-      icon: ShieldCheck,
-      show: canAccessAdmin(role),
-      group: "admin",
-    },
-  ];
-
   return (
     <div className="flex min-h-screen w-full bg-background">
       <SidebarNav
-        navItems={navItems}
         userName={userName}
         role={role}
         groupName={groupName}
