@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpenText, Layers3 } from "lucide-react";
+import { BookOpenText, Layers3, Scale } from "lucide-react";
 
 import { updateSubjectAction } from "@/app/admin/subjects/actions";
 import { AppShell } from "@/components/app-shell";
@@ -39,6 +39,15 @@ export default async function AdminSubjectsPage() {
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH admin";
   const topicsBySubject = new Map<string, NonNullable<typeof topics>>();
+  const totalBoardWeight = (subjects ?? []).reduce(
+    (total, subject) => total + subject.board_weight,
+    0,
+  );
+  const activeSubjectCount = (subjects ?? []).filter(
+    (subject) => subject.is_active,
+  ).length;
+  const totalTopicCount = (topics ?? []).length;
+  const activeTopicCount = (topics ?? []).filter((topic) => topic.is_active).length;
 
   for (const topic of topics ?? []) {
     const current = topicsBySubject.get(topic.subject_id) ?? [];
@@ -64,7 +73,8 @@ export default async function AdminSubjectsPage() {
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               Manage subject weights and display order for{" "}
-              {context.activeExamProgram.name}.
+              {context.activeExamProgram.name}. Seeded weights stay unchanged
+              unless an admin edits them here.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -73,6 +83,54 @@ export default async function AdminSubjectsPage() {
               Manage topics
             </Link>
           </Button>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Exam track</CardTitle>
+              <CardDescription>{context.activeGroup.name}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-semibold leading-6">
+                {context.activeExamProgram.name}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Active subjects</CardTitle>
+              <CardDescription>Available for content</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tracking-normal">
+                {activeSubjectCount}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Total weight</CardTitle>
+              <CardDescription>Current subject weights</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center gap-3">
+              <Scale className="size-5 text-primary" aria-hidden="true" />
+              <p className="text-3xl font-semibold tracking-normal">
+                {totalBoardWeight}%
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Topics</CardTitle>
+              <CardDescription>Active / total</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tracking-normal">
+                {activeTopicCount} / {totalTopicCount}
+              </p>
+            </CardContent>
+          </Card>
         </section>
 
         {subjectsError ? (
@@ -106,7 +164,11 @@ export default async function AdminSubjectsPage() {
                   <CardTitle>{subject.name}</CardTitle>
                   <CardDescription>
                     {subject.board_weight}% board weight / display order{" "}
-                    {subject.sort_order}
+                    {subject.sort_order} /{" "}
+                    {(topicsBySubject.get(subject.id) ?? []).length} topic
+                    {(topicsBySubject.get(subject.id) ?? []).length === 1
+                      ? ""
+                      : "s"}
                   </CardDescription>
                 </div>
                 <Badge variant={subject.is_active ? "default" : "secondary"}>
@@ -168,7 +230,8 @@ export default async function AdminSubjectsPage() {
                   </div>
                   {(topicsBySubject.get(subject.id) ?? []).length === 0 ? (
                     <p className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
-                      No topics yet.
+                      No topics yet. Create topics before adding questions for
+                      this subject.
                     </p>
                   ) : null}
                   {(topicsBySubject.get(subject.id) ?? []).map((topic) => (

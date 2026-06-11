@@ -33,7 +33,6 @@ export default async function AdminTopicsPage() {
         .select("id, name, board_weight, sort_order, is_active")
         .eq("group_id", context.activeGroup.id)
         .eq("exam_program_id", context.activeExamProgram.id)
-        .eq("is_active", true)
         .order("sort_order", { ascending: true }),
       supabase
         .from("topics")
@@ -44,6 +43,17 @@ export default async function AdminTopicsPage() {
   const subjectNameById = new Map(
     (subjects ?? []).map((subject) => [subject.id, subject.name]),
   );
+  const activeSubjects = (subjects ?? []).filter((subject) => subject.is_active);
+  const topicsBySubject = new Map<string, NonNullable<typeof topics>>();
+  const totalTopicCount = (topics ?? []).length;
+  const activeTopicCount = (topics ?? []).filter((topic) => topic.is_active).length;
+
+  for (const topic of topics ?? []) {
+    const current = topicsBySubject.get(topic.subject_id) ?? [];
+    current.push(topic);
+    topicsBySubject.set(topic.subject_id, current);
+  }
+
   const userName =
     context.profile?.full_name ?? context.user.email ?? "BoardReady PH admin";
 
@@ -65,7 +75,8 @@ export default async function AdminTopicsPage() {
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               Create, order, and archive topics for{" "}
-              {context.activeExamProgram.name}.
+              {context.activeExamProgram.name}. Topics inherit the active group
+              and exam track through their subject.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -74,6 +85,42 @@ export default async function AdminTopicsPage() {
               View subjects
             </Link>
           </Button>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Exam track</CardTitle>
+              <CardDescription>{context.activeGroup.name}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-semibold leading-6">
+                {context.activeExamProgram.name}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Active subjects</CardTitle>
+              <CardDescription>Eligible for new topics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tracking-normal">
+                {activeSubjects.length}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Topics</CardTitle>
+              <CardDescription>Active / total</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tracking-normal">
+                {activeTopicCount} / {totalTopicCount}
+              </p>
+            </CardContent>
+          </Card>
         </section>
 
         {subjectsError || error ? (
@@ -92,7 +139,7 @@ export default async function AdminTopicsPage() {
             <div className="space-y-1.5">
               <CardTitle>Create topic</CardTitle>
               <CardDescription>
-                New topics are scoped to the active group and exam track.
+                New topics require an active subject in the current exam track.
               </CardDescription>
             </div>
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
@@ -109,11 +156,16 @@ export default async function AdminTopicsPage() {
                 <select
                   id="subjectId"
                   name="subjectId"
+                  disabled={activeSubjects.length === 0}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   required
                 >
-                  <option value="">Choose subject</option>
-                  {(subjects ?? []).map((subject) => (
+                  <option value="">
+                    {activeSubjects.length === 0
+                      ? "No active subjects"
+                      : "Choose subject"}
+                  </option>
+                  {activeSubjects.map((subject) => (
                     <option key={subject.id} value={subject.id}>
                       {subject.name}
                     </option>
@@ -122,7 +174,14 @@ export default async function AdminTopicsPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="name">Topic name</Label>
-                <Input id="name" name="name" minLength={2} maxLength={140} required />
+                <Input
+                  id="name"
+                  name="name"
+                  minLength={2}
+                  maxLength={140}
+                  placeholder="Example: Psychological testing ethics"
+                  required
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="sortOrder">Display order</Label>
@@ -145,112 +204,154 @@ export default async function AdminTopicsPage() {
                 />
                 Active
               </label>
-              <Button type="submit" className="md:col-span-4 md:w-fit">
+              <Button
+                type="submit"
+                disabled={activeSubjects.length === 0}
+                className="md:col-span-4 md:w-fit"
+              >
                 Create topic
               </Button>
             </form>
+            {activeSubjects.length === 0 ? (
+              <p className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                Activate or create a subject before adding topics.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 
         <section className="grid gap-4">
-          {(topics ?? []).length === 0 ? (
+          {(subjects ?? []).length === 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>No topics yet</CardTitle>
+                <CardTitle>No subjects yet</CardTitle>
                 <CardDescription>
-                  Create topics before building questions for this exam track.
+                  Add subjects before creating topics for this exam track.
                 </CardDescription>
               </CardHeader>
             </Card>
           ) : null}
 
-          {(topics ?? []).map((topic) => (
-            <Card key={topic.id}>
+          {(subjects ?? []).map((subject) => {
+            const subjectTopics = topicsBySubject.get(subject.id) ?? [];
+
+            return (
+              <Card key={subject.id}>
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div className="space-y-1.5">
-                  <CardTitle>{topic.name}</CardTitle>
+                    <CardTitle>{subject.name}</CardTitle>
                   <CardDescription>
-                    {subjectNameById.get(topic.subject_id) ?? "Inactive subject"}{" "}
-                    / display order {topic.sort_order}
+                      {subject.board_weight}% board weight / display order{" "}
+                      {subject.sort_order} / {subjectTopics.length} topic
+                      {subjectTopics.length === 1 ? "" : "s"}
                   </CardDescription>
                 </div>
-                <Badge variant={topic.is_active ? "default" : "secondary"}>
-                  {topic.is_active ? "Active" : "Archived"}
+                  <Badge variant={subject.is_active ? "default" : "secondary"}>
+                    {subject.is_active ? "Active subject" : "Inactive subject"}
                 </Badge>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <form
-                  action={updateTopicAction}
-                  className="grid gap-4 lg:grid-cols-[1fr_1.1fr_140px_auto] lg:items-end"
-                >
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <div className="grid gap-2">
-                    <Label htmlFor={`subject-${topic.id}`}>Subject</Label>
-                    <select
-                      id={`subject-${topic.id}`}
-                      name="subjectId"
-                      defaultValue={topic.subject_id}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                      required
-                    >
-                      {(subjects ?? []).map((subject) => (
-                        <option key={subject.id} value={subject.id}>
-                          {subject.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor={`name-${topic.id}`}>Topic name</Label>
-                    <Input
-                      id={`name-${topic.id}`}
-                      name="name"
-                      defaultValue={topic.name}
-                      minLength={2}
-                      maxLength={140}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor={`order-${topic.id}`}>Order</Label>
-                    <Input
-                      id={`order-${topic.id}`}
-                      name="sortOrder"
-                      type="number"
-                      min={0}
-                      max={1000}
-                      defaultValue={topic.sort_order}
-                      required
-                    />
-                  </div>
-                  <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm lg:self-end">
-                    <input
-                      type="checkbox"
-                      name="isActive"
-                      defaultChecked={topic.is_active}
-                      className="size-4 accent-primary"
-                    />
-                    Active
-                  </label>
-                  <Button type="submit" className="lg:col-span-4 lg:w-fit">
-                    Save topic
-                  </Button>
-                </form>
+                  {subjectTopics.length === 0 ? (
+                    <p className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                      No topics yet for this subject.
+                    </p>
+                  ) : null}
 
-                <form action={setTopicActiveAction}>
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <input
-                    type="hidden"
-                    name="isActive"
-                    value={topic.is_active ? "false" : "true"}
-                  />
-                  <Button type="submit" variant="outline" size="sm">
-                    {topic.is_active ? "Archive topic" : "Restore topic"}
-                  </Button>
-                </form>
+                  {subjectTopics.map((topic) => (
+                    <div key={topic.id} className="grid gap-4 rounded-md border p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="font-medium">{topic.name}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {subjectNameById.get(topic.subject_id) ??
+                              "Inactive subject"}{" "}
+                            / display order {topic.sort_order}
+                          </p>
+                        </div>
+                        <Badge variant={topic.is_active ? "default" : "secondary"}>
+                          {topic.is_active ? "Active topic" : "Archived topic"}
+                        </Badge>
+                      </div>
+
+                      <form
+                        action={updateTopicAction}
+                        className="grid gap-4 lg:grid-cols-[1fr_1.1fr_140px_auto] lg:items-end"
+                      >
+                        <input type="hidden" name="topicId" value={topic.id} />
+                        <div className="grid gap-2">
+                          <Label htmlFor={`subject-${topic.id}`}>Subject</Label>
+                          <select
+                            id={`subject-${topic.id}`}
+                            name="subjectId"
+                            defaultValue={topic.subject_id}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            required
+                          >
+                            {(subjects ?? []).map((subjectOption) => (
+                              <option
+                                key={subjectOption.id}
+                                value={subjectOption.id}
+                              >
+                                {subjectOption.name}
+                                {subjectOption.is_active ? "" : " (inactive)"}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor={`name-${topic.id}`}>Topic name</Label>
+                          <Input
+                            id={`name-${topic.id}`}
+                            name="name"
+                            defaultValue={topic.name}
+                            minLength={2}
+                            maxLength={140}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor={`order-${topic.id}`}>Order</Label>
+                          <Input
+                            id={`order-${topic.id}`}
+                            name="sortOrder"
+                            type="number"
+                            min={0}
+                            max={1000}
+                            defaultValue={topic.sort_order}
+                            required
+                          />
+                        </div>
+                        <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm lg:self-end">
+                          <input
+                            type="checkbox"
+                            name="isActive"
+                            defaultChecked={topic.is_active}
+                            className="size-4 accent-primary"
+                          />
+                          Active
+                        </label>
+                        <Button type="submit" className="lg:col-span-4 lg:w-fit">
+                          Save topic
+                        </Button>
+                      </form>
+
+                      <form action={setTopicActiveAction}>
+                        <input type="hidden" name="topicId" value={topic.id} />
+                        <input
+                          type="hidden"
+                          name="isActive"
+                          value={topic.is_active ? "false" : "true"}
+                        />
+                        <Button type="submit" variant="outline" size="sm">
+                          {topic.is_active ? "Archive topic" : "Restore topic"}
+                        </Button>
+                      </form>
+                    </div>
+                  ))}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </section>
       </div>
     </AppShell>
