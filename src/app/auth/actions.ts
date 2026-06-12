@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { getBaseUrl } from "@/lib/utils";
 
 const credentialsSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
@@ -79,8 +80,7 @@ export async function signupAction(
     };
   }
 
-  const requestHeaders = await headers();
-  const origin = requestHeaders.get("origin") ?? "http://localhost:3000";
+  const origin = getBaseUrl();
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signUp({
